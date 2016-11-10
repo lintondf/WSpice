@@ -14,6 +14,8 @@ import java.util.Vector;
 import org.apache.commons.io.FileUtils;
 
 public class Builder {
+	
+	public static final boolean isMacOS = System.getProperty("os.name").startsWith("Mac");
 
 	static final String FUNCTION_TOKEN1 = "void cspice_";
 	static final String FUNCTION_TOKEN2 = "void mice_";
@@ -948,8 +950,9 @@ public class Builder {
 	HashMap<String, String> index = new HashMap<String, String>();
 
 	protected void loadIndex() {
-		File txt = new File(
-				"/Users/lintondf/Library/Mathematica/Applications/DFL/index.txt");
+		File txt = new File( (isMacOS) ? "/Users/lintondf/Library/Mathematica/Applications/DFL/" :
+			                       "C:\\Users\\Barbara\\GIT\\WSpice", 
+                    				"index.txt");
 		try {
 			List<String> lines = FileUtils.readLines(txt, "UTF-8");
 			ListIterator<String> it = lines.listIterator();
@@ -1054,8 +1057,9 @@ public class Builder {
 		}
 
 		public void load(String name) {
-			File dotm = new File(
-					"/Users/lintondf/Google Drive/cspice/mice/cspice_" + name
+			File dotm = new File( (isMacOS) ? "/Users/lintondf/Google Drive/cspice/mice/" : 
+				    "C:\\Users\\Barbara\\Google Drive\\cspice\\mice",
+					"cspice_" + name
 							+ ".m");
 			try {
 				List<String> lines = FileUtils.readLines(dotm, "UTF-8");
@@ -1178,7 +1182,9 @@ public class Builder {
 		
 		loadIndex();
 		String name = null;
-		File mice = new File("/Users/lintondf/Google Drive/cspice/mice/mice.c");
+		File mice = new File( (isMacOS) ? "/Users/lintondf/Google Drive/cspice/mice/" : 
+			"C:\\Users\\Barbara\\Google Drive\\cspice\\mice",
+				"mice.c");
 		try {
 			List<String> lines = FileUtils.readLines(mice, "UTF-8");
 			ListIterator<String> it = lines.listIterator();
@@ -1299,8 +1305,10 @@ public class Builder {
 	
 	HashMap<String, Vector<Result>> callingSequences = new HashMap<String, Vector<Result>>();
 	
-	public void scanCallSequenceIndex(String path) {
-		File mice = new File(path);
+	public void scanCallSequenceIndex(String filename) {
+		File mice = new File( (isMacOS) ? "/Users/lintondf/GIT/WSpice/": 
+			"C:\\Users\\Barbara\\GIT\\WSpice", 
+				filename);
 		try {
 			List<String> lines = FileUtils.readLines(mice, "UTF-8");
 			ListIterator<String> it = lines.listIterator();
