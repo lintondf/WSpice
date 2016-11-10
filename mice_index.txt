@@ -1,0 +1,288 @@
+
+Main Page
+Index of MICE functions
+A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S  T  U  V  W  X 
+Index typography for arguments
+
+`name` : a string variable of dimension 1xL with L the string length
+_name_ : a vectorizable variable
+name(N) : an N-vector (Nx1)
+name(N,M) : an NxM array
+_name(N)_ : a vectorized N-vector with dimension (NxS) where S represents the measure of vectorization
+_name(N,M)_ : a vectorized NxM array with dimension (NxMxS) where S represents the measure of vectorization
+name() : an output vector of unknown dimension
+_`name`_ : a vector of strings with dimension SxL with L the string lengths and S the measure of vectorization
+[name] : when used to delimit an input argument (rhs), indicates an optional input argument
+A
+AXISAR: [r(3,3)] = cspice_axisar( axis(3), angle)
+B	Top
+B1900: [b1900] = cspice_b1900
+B1950: [b1950] = cspice_b1950
+BODC2N: [_`name`_, _found_] = cspice_bodc2n(_code_)
+BODC2N: [_`name`_] = mice_bodc2n(_code_)
+BODC2S: [_`name`_] = cspice_bodc2s(_code_)
+BODDEF: cspice_boddef(`name`, code)
+BODN2C: [_code_, _found_] = cspice_bodn2c(_`name`_)
+BODN2C: [_code_] = mice_bodn2c(_`name`_)
+BODS2C: [_code_, _found_] = cspice_bods2c(_`name`_)
+BODS2C: [_code_] = mice_bods2c(_`name`_)
+BODVCD: [values()] = cspice_bodvcd(bodyid, `item`, maxn)
+BODVRD: [values()] = cspice_bodvrd( `body`, `item`, maxn)
+C	Top
+CGV2EL: [ellipse] = cspice_cgv2el( center(3), vec1(3), vec2(3) )
+CIDFRM: [_frcode_, _`frname`_, _found_] = cspice_cidfrm(_cent_)
+CKCLS: cspice_ckcls(handle)
+CKCOV: [cov] = cspice_ckcov( _`ck`_, idcode, needav, level, tol, timsys, room, [cover_i])
+CKGP: [_cmat(3,3)_, _clkout_, _found_] = cspice_ckgp(inst, _sclkdp_, tol, `ref`)
+CKGPAV: [_cmat(3,3)_, _av(3)_, _clkout_, _found_] = cspice_ckgpav(inst, _sclkdp_, tol, `ref`)
+CKOBJ: [ids] = cspice_ckobj( _`ck`_, room, [ids_i])
+CKOPN: [handle] = cspice_ckopn(`fname`, `ifname`, ncomch)
+CKW01: cspice_ckw01( handle, begtime, endtime, inst, ref, avflag, segid, sclkdp(N), quats(4,N), avvs(3,N))
+CKW02: cspice_ckw02( handle, begtime, endtime, inst, ref, segid, start(N), stop(N), quats(4,N), avvs(3,N)) rates(N)
+CKW03: cspice_ckw03( handle, begtime, endtime, inst, ref, avflag, segid, sclkdp(N), quats(4,N), avvs(3,N), starts(M))
+CLIGHT: [clight] = cspice_clight
+CLPOOL: cspice_clpool
+CNMFRM: [_frcode_, _`frname`_, _found_] = cspice_cnmfrm(_`cname`_)
+CONICS: [_state(6)_] = cspice_conics( _elts(8)_, _et_ )
+CONVRT: [_y_] = cspice_convrt( _x_, `in`, `out`)
+CYLLAT: [_radius_, _lon_, _lat_] = cspice_cyllat(_r_, _lonc_, _z_)
+CYLREC: [_rectan(3)_] = cspice_cylrec(_r_, _lonc_, _z_)
+CYLSPH: [_radius_, _colat_, _lon_] = cspice_cylsph(_r_, _lonc_, _z_)
+D	Top
+DAFAC: cspice_dafac( handle, buffer )
+DAFBBS: cspice_dafbbs(handle)
+DAFBFS: cspice_dafbfs(handle)
+DAFCLS: cspice_dafcls(handle)
+DAFCS: cspice_dafcs(handle)
+DAFDC: cspice_dafdc(handle)
+DAFEC: [buffer, done] = cspice_dafec( handle, bufsiz, lenout )
+DAFFNA: [found] = cspice_daffna
+DAFFPA: [found] = cspice_daffpa
+DAFGDA: data = cspice_dafgda( handle, baddr, eaddr)
+DAFGN: [`name`] = cspice_dafgn
+DAFGS: [dc, ic] = cspice_dafgs( nd, ni)
+DAFOPR: [handle] = cspice_dafopr(`fname`)
+DAFOPW: [handle] = cspice_dafopw(`fname`)
+DAFUS: [dc(nd), ic(nd)] = cspice_dafus( sum(), nd, ni)
+DCYLDR: [_jacobi(3,3)_] = cspice_dcyldr( _x_, _y_, _z_)
+DELTET: [_delta_] = cspice_deltet( _epoch_, `eptype`)
+DGEODR: [_jacobi(3,3)_] = cspice_dgeodr( _x_, _y_, _z_, re, f)
+DLATDR: [_jacobi(3,3)_] = cspice_dlatdr( _x_, _y_, _z_)
+DPGRDR: [_jacobi(3,3)_] = cspice_dpgrdr( `body`, _x_, _y_, _z_, re, f)
+DPR: [dpr] = cspice_dpr
+DRDCYL: [_jacobi(3,3)_] = cspice_drdcyl( _r_, _lon_, _z_)
+DRDGEO: [_jacobi(3,3)_] = cspice_drdgeo( _lon_, _lat_, _alt_, re, f)
+DRDLAT: [_jacobi(3,3)_] = cspice_drdlat( _r_, _lon_, _lat_)
+DRDPGR: [_jacobi(3,3)_] = cspice_drdpgr( `body`, _lon_, _lat_, _alt_, re, f)
+DRDSPH: [_jacobi(3,3)_] = cspice_drdsph( _r_, _colat_, _lon_)
+DSPHDR: [_jacobi(3,3)_] = cspice_dsphdr( _x_, _y_, _z_)
+DTPOOL: [_found_, _n_, _`type`_] = cspice_dtpool(_`name`_)
+DTPOOL: [_value_] = mice_dtpool(_`name`_)
+DUCRSS: [_ducrss(6)_] = cspice_ducrss(_s1(6)_, _s2(6)_)
+DVCRSS: [_dvcrss(6)_] = cspice_dvcrss(_s1(6)_, _s2(6)_)
+DVDOT: [_dvdot_] = cspice_dvdot(_s1(6)_, _s2(6)_)
+DVHAT: [_dvhat(6)_] = cspice_dvhat(_s1(6)_)
+DVNORM: [_dvnorm_] = cspice_dvnorm(_state(6)_)
+DVPOOL: cspice_dvpool(_`name`_)
+DVSEP: [_dvsep_] = cspice_dvsep(_s1(6)_, _s2(6)_)
+E	Top
+EDLIMB: [ limb ] = cspice_edlimb( a, b, c, viewpt )
+EDTERM: [ trgepc, obspos, termpts] = cspice_edterm( `trmtyp`, `source`, `target`, et, `fixfrm`, `abcorr`, `obsrvr`, npts)
+EKFIND: [ nmrows, ok, `errmsg`] = cspice_ekfind( `query` )
+EKGC: [ `cdata`, null, found] = cspice_ekgc( selidx, row, elment, lenout )
+EKGD: [ ddata, null, found] = cspice_ekgd( selidx, row, elment )
+EKGI: [ idata, null, found] = cspice_ekgi( selidx, row, elment )
+EKNELT: [nelt] = cspice_eknelt( selidx, row )
+EL2CGV: [center(3), smajor(3), sminor(3)] = cspice_el2cgv( ellipse )
+ET2LST: [ _hr_, _min_, _sec_, _`time`_, _`ampm`_] = cspice_et2lst( _et_, body, lon, `type`)
+ET2UTC: [_`utcstr`_] = cspice_et2utc(_et_, `format`, prec)
+ETCAL: [_`string`_] = cspice_etcal(_et_)
+EUL2M: [_r(3,3)_] = cspice_eul2m(_angle3_, _angle2_, _angle1_, axis3, axis2, axis1)
+EUL2XF: [_xform(6,6)_] = cspice_eul2xf(_eulang(6)_, axisa, axisb, axisc)
+F	Top
+FOVRAY: [_visibl_] = cspice_xfmsta( `inst`, _raydir[6], `rframe`, `abcorr`), `obsrvr`, _et_]
+FOVTRG: [_visibl_] = cspice_fovtrg( `instrument`, `target`, `target_shape`, `target_frame`, `abcorr`), `observer`, _et_]
+FRAME: [x(3), y(3), z(3)] = cspice_frame( vec(3) )
+FRINFO: [_cent_, _clss_, _clssid_, _found_] = cspice_frinfo(_frcode_)
+FRMNAM: [_`frmnam`_] = cspice_frmnam(_frcode_)
+FURNSH: cspice_furnsh(_`file`_)
+G	Top
+GCPOOL: [cvals(), found] = cspice_gcpool( `name`, start, room)
+GDPOOL: [dvals(), found] = cspice_gdpool( `name`, start, room)
+GEOREC: [_rectan(3)_] = cspice_georec( _lon_, _lat_, _alt_, re, f)
+GETFOV: [`shape`, `frame`, bsight(3), bounds(3,N)] = cspice_getfov( instid, room)
+GFDIST: [result] = cspice_gfdist( `target`, `abcorr`, `obsrvr`, `relate`, refval, adjust, step, nintvls, cnfine )
+GFILUM: [result] = cspice_gfilum( `method`, `angtyp`, `target`, `illmn`, `fixref`, `abcorr`, `obsrvr`, spoint[3], `relate`, refval, adjust, step, nintvls, cnfine, )
+GFOCLT: [result] = cspice_gfoclt( `occtyp`, `front`, `fshape`, `fframe`, `back`, `bshape`, `bframe`, `abcorr`, `obsrvr`, step, cnfine, room)
+GFPA: [result] = cspice_gfpa( `target`, `illmn`, `abcorr, obsrvr`, `relate`, refval, adjust, step, nintvls, cnfine )
+GFPOSC: [result] = cspice_gfposc( `target`, `frame`, `abcorr`, `obsrvr`, `crdsys`, `coord`, `relate`, refval, adjust, step, nintvls, cnfine )
+GFRFOV: [result] = cspice_gfrfov( `inst`, raydir[3], `rframe` `abcorr`, `obsrvr`, step, cnfine, nintvls)
+GFRR: [result] = cspice_gfrr( `target`, `abcorr`, `obsrvr`, `relate`, refval, adjust, step, nintvls, cnfine )
+GFSEP: [result] = cspice_gfsep( `targ1`, `shape1`, `frame1`, `targ2`, `shape2`, `frame2`, `abcorr`, `obsrvr`, `relate`, refval, adjust, step, nintvls, cnfine )
+GFSNTC: [result] = cspice_gfsntc( `target`, `fixref`, `method`, `abcorr`, `obsrvr`, `dref`, dvec[3], `crdsys`, `coord`, `relate`, refval, adjust, step, nintvls, cnfine )
+GFSTOL: cspice_gfstol(value)
+GFSUBC: [result] = cspice_gfsubc( `target`, `fixref`, `method`, `abcorr`, `obsrvr`, `crdsys`, `coord`, `relate`, refval, adjust, step, nintvls, cnfine )
+GFTFOV: [result] = cspice_gftfov( `inst`, `target`, `tshape`, `tframe` `abcorr`, `obsrvr`, step, cnfine, room)
+GIPOOL: [ivals(), found] = cspice_gipool( `name`, start, room )
+GNPOOL: [kvars(), found] = cspice_gnpool( `name`, start, room )
+H	Top
+HALFPI: double = cspice_halfpi
+I	Top
+ILLUM: [_phase_, _solar_, _emissn_] = cspice_illum( `target`, _et_, `abcorr`, `obsrvr`, _spoint(3)_)
+ILUMIN: [trgepc, srfvec(3), phase, solar, emissn] = cspice_ilumin( `method`, `target`, et, `fixref`, `abcorr`, `obsrvr`, spoint(3))
+INEDPL: [ ellipse, found ] = cspice_inedpl( a, b, c, plane )
+INELPL: [ nxpts, xpt1, xpt2] = cspice_inelpl( ellipse, plane )
+INRYPL: [ nxpts, xpt ] = cspice_inrypl( vertex, dir, plane )
+INVORT: [mit(3,3)] = cspice_rotmat( m(3,3) )
+J	Top
+J1900: [j1900] = cspice_j1900
+J1950: [j1950] = cspice_j1950
+J2000: [j2000] = cspice_j2000
+J2100: [j2100] = cspice_j21000
+JYEAR: [jyear] = cspice_jyear
+K	Top
+KCLEAR: cspice_kclear
+KDATA: [ `file`, `filtyp`, `source`, handle ] = cspice_kdata( which, `kind` )
+KINFO: [ `filtyp`, `source`, handle, found ] = cspice_kinfo( `file` )
+KTOTAL: [count] = cspice_ktotal(`kind`)
+L	Top
+LATCYL: [ _r_, _lonc_, _z_] = cspice_latcyl( _radius_, _lon_, _lat_)
+LATREC: [_rectan(3)_] = cspice_latrec(_radius_, _longitude_, _latitude_)
+LATSPH: [_radius_, _colat_, _lon_] = cspice_latsph( _radius_, _longitude_, _latitude_)
+LMPOOL: cspice_lmpool( _`cvals`_ )
+LTIME: [_ettarg_, _elapsd_] = cspice_ltime( _etobs_, obs, `dir`, targ)
+M	Top
+M2EUL: [_angle3_, _angle2_, _angle1_] = cspice_m2eul( _r(3,3)_, axis3, axis2, axis1)
+M2Q: [_q(4)_] = cspice_m2q( _r(3,3)_ )
+MICE: [`value`] = cspice_mice( `item` )
+N	Top
+NAMFRM: [_frcode_] = cspice_namfrm(_`frname`_)
+NEARPT: [_npoint(3)_, _alt_] = cspice_nearpt( _positn(3)_, a, b, c )
+NEARPT: [_npoint_] = mice_nearpt( _positn(3)_, a, b, c )
+NPEDLN: [ pnear(3), dist] = cspice_npedln( a, b, c, linept(3), linedr(3) )
+NPELPT: [ pnear, dist ] = cspice_npelpt( point, ellipse )
+NPLNPT: [ pnear(3), dist] = cspice_nplnpt( linpt(3), lindir(3), point(3) )
+NVC2PL: [plane] = cspice_nvc2pl( normal(3), constant )
+NVP2PL: [plane] = cspice_nvp2pl( normal(3), point(3) )
+O	Top
+OCCULT: [_output_state_] = cspice_occult( `target1`, `shape1`, `frame1`,`target2`, `shape2`, `frame2`, `abcorr`, `observer`, _time_)
+OSCELT: [_elts(8)_] = cspice_oscelt( _state(6)_, _et_, mu )
+P	Top
+PCPOOL: cspice_pcpool( `name`, `cvals`)
+PDPOOL: cspice_pdpool( `name`, dvals)
+PGRREC: [_rectan(3)_] = cspice_pgrrec( body, _lon_, _lat_, _alt_, re, f)
+PHASEQ: [_phase_] = cspice_phaseq( _et_, `target`, `illmn`, `obsrvr`, `abcorr` )
+PI: [onepi] = cspice_pi
+PIPOOL: cspice_pipool( `name`, ivals[])
+PJELPL: [elout] = cspice_pjelpl( elin, plane )
+PL2NVC: [normal(3), constant] = cspice_pl2nvc( plane )
+PL2NVP: [normal(3), point(3)] = cspice_pl2nvp( plane )
+PL2PSV: [point(3), span1(3), span2(3)] = cspice_pl2psv( plane )
+PSV2PL: [plane] = cspice_psv2pl( point(3), span1(3), span2(3) )
+PXFORM: [_rotate(3,3)_] = cspice_pxform( `from`, `to`, _et_ )
+PXFRM2: [_rotate(3,3)_] = cspice_pxfrm2( `from`, `to`, _etfrom_, _etto_ )
+Q	Top
+Q2M: [_r(3,3)_] = cspice_q2m( _q(4)_ )
+R	Top
+RADREC: [_rectan(3)_] = cspice_radrec( _range_, _ra_, _dec_)
+RAV2XF: [_xform(6,6)_] = cspice_rav2xf(_rot(3,3)_, _av(3)_)
+RAXISA: [axis(3), angle] = cspice_raxisa(matrix(3,3))
+RECCYL: [_r_, _lonc_, _z_] = cspice_reccyl(_rectan(3)_)
+RECGEO: [_lon_, _lat_, _alt_] = cspice_recgeo(_rectan(3)_, re, f)
+RECLAT: [_radius_, _longitude_, _latitude_] = cspice_reclat(_rectan(3)_)
+RECPGR: [_lon_, _lat_, _alt_] = cspice_recpgr( body, _rectan(3)_, re, f)
+RECRAD: [_range_, _ra_, _dec_] = cspice_recrad(_rectan(3)_)
+RECSPH: [_r_, _colat_, _lon_] = cspice_recsph(_rectan(3)_)
+ROTATE: [_mout(3,3)_] = cspice_rotate( _angle_, iaxis )
+ROTMAT: [mout(3,3)] = cspice_rotmat( m1(3,3), angle, iaxis )
+RPD: [rpd] = cspice_rpd
+S	Top
+SAELGV: [ smajor(3), sminor(3) ] = cspice_saelgv( vec1(3), vec2(3) )
+SCDECD: [_`sclkch`_] = cspice_scdecd(sc, _sclkdp_)
+SCE2C: [_sclkdp_] = cspice_sce2c(sc, _et_)
+SCE2S: [_`sclkch`_] = cspice_sce2s(sc, _et_)
+SCENCD: [_sclkdp_] = cspice_scencd(sc, _`sclkch`_)
+SCS2E: [_et_] = cspice_scs2e(sc, _`sclkch`_)
+SCT2E: [_et_] = cspice_sct2e(sc, _sclkdp_)
+SCTIKS: [_ticks_] = cspice_sctiks(sc, _`clkstr`_)
+SINCPT: [ spoint, trgepc, srfvec, found] = cspice_sincpt( `method`, `target`, et, `fixref`, `abcorr`, `obsrvr`, `dref`, dvec)
+SPD: [spd] = cspice_spd
+SPHCYL: [ _r_, _lonc_, _z_] = cspice_sphcyl(_radius_, _colat_, _slon_)
+SPHLAT: [_radius_, _lon_, _lat_] = cspice_sphlat(_r_, _colat_, _lons_)
+SPHREC: [_rectan(3)_] = cspice_sphrec(_r_, _colat_, _lon_)
+SPKCLS: cspice_spkcls(handle)
+SPKCOV: [cover] = cspice_spkcov( _`spk`_, idcode, room, [cover_i])
+SPKCPO: [ state(6), lt] = cspice_spkcpo( `target`, et, `outref`, `refloc`, `abcorr`, obspos(3), `obsctr`, `obsref` )
+SPKCPT: [ state(6), lt] = cspice_spkcpt( trgpos(3), `trgctr`, `trgref`, et, `outref`, `evlref`, `abcorr`, `obsrvr` )
+SPKCVO: [ state(6), lt] = cspice_spkcvo( `target`, et, `outref`, `evlref`, `abcorr`, obssta(6), obsepc, `obsctr`, `obsref` )
+SPKCVT: [state(6), lt] = cspice_spkcvt( trgsta(6), trgepc, `trgctr`, `trgref`, et, `outref`, `evlref`, `abcorr`, `obsrvr` )
+SPKEZR: [_state(6)_, _lt_] = cspice_spkezr( `targ`, _et_, `ref`, `abcorr`, `obs`)
+SPKEZR: [_starg_] = mice_spkezr( `targ`, _et_, `ref`, `abcorr`, `obs`)
+SPKOBJ: [ids] = cspice_spkobj( _`spk`_, room, [ids_i])
+SPKOPN: [handle] = cspice_spkopn(`fname`, `ifname`, ncomch)
+SPKPOS: [_pos(3)_, _lt_] = cspice_spkpos( `targ`, _et_, `ref`, `abcorr`, `obs`)
+SPKPOS: [_ptarg_] = mice_spkpos( `targ`, _et_, `ref`, `abcorr`, `obs`)
+SPKPVN: [ref, state(6), center] = cspice_spkpvn( handle, descr(5), et)
+SPKSFS: [handle, descr(5), `ident`, found] = cspice_spksfs( body, et)
+SPKW08: cspice_spkw08( handle, body, center, frame, first, last, segid, degree, states, epoch1, step )
+SRFXPT: [_spoint(3)_, _dist_, _trgepc_, _obspos(3)_, _found_ ] = cspice_srfxpt( `method`, `target`, _et_, `abcorr`, `obsrvr`, `dref`, dvec(3))
+SRFXPT: [_surf_ ] = mice_srfxpt( `method`, `target`, _et_, `abcorr`, `obsrvr`, `dref`, dvec(6))
+STPOOL: [`string`, found] = cspice_stpool( `item`, nth, `contin` )
+STR2ET: [_et_] = cspice_str2et(_`str`_)
+SUBPNT: [spoint, trgepc, srfvec] = cspice_subpnt( `method`, `target`, et, `fixref`, `abcorr`, `obsrvr`)
+SUBPNT: [subnt] = mice_subpnt( `method`, `target`, et, `fixref`, `abcorr`, `obsrvr`)
+SUBPT: [_spoint(3)_, _alt_] = cspice_subpt( `method`, `target`, _et_, `abcorr`, `obsrvr`)
+SUBPT: [_spoint_] = mice_subpt( `method`, `target`, _et_, `abcorr`, `obsrvr`)
+SUBSLR: [spoint, trgepc, srfvec] = cspice_subslr( `method`, `target`, et, `fixref`, `abcorr`, `obsrvr`)
+SUBSLR: [subslr] = mice_subslr( `method`, `target`, et, `fixref`, `abcorr`, `obsrvr`)
+SUBSOL: [_spoint(3)_ ] = cspice_subsol( `method`, `target`, _et_, `abcorr`, `obsrvr`)
+SURFNM: [_normal(3)_] = cspice_surfnm( a, b, c, _point(3)_ )
+SURFPT: [point, found] = cspice_surfpt( `positn`, `u`, `a`, `b`, c )
+SXFORM: [_xform(6,6)_] = cspice_sxform( `from`, `to`, _et_ )
+T	Top
+TIMDEF_GET: [value] = cspice_timdef_get( `item` )
+TIMDEF_SET: cspice_timdef_set( `item`, `value`)
+TIMOUT: [_`output`_] = cspice_timout( _et_, `pictur` )
+TKVRSN: [`value`] = cspice_tkvrsn( `item` )
+TPICTR: [ `pictur`, ok, `errmsg`] = cspice_tpictr( `sample`)
+TSETYR: cspice_tsetyr(year)
+TWOPI: [twopi] = cspice_twopi
+TWOVEC: [mout(3,3)] = cspice_twovec( axdef(3), indexa, plndef(3), indexp)
+TYEAR: double = cspice_tyear
+U	Top
+UNITIM: [_output_] = cspice_unitim( _epoch_, `insys`, `outsys` )
+UNLOAD: cspice_unload(_`file`_)
+UNORM: [_vout(3)_, _vmag_] = cspice_unorm(_v1(3)_)
+V	Top
+VDIST: [_dist_] = cspice_vdist(_v1(3)_, _v2(3)_)
+VHAT: [_vout(3)_] = cspice_vhat(_v1(3)_)
+VNORM: [_vnorm_] = cspice_vnorm(_v1(3)_)
+VPERP: [_vperp(3)_] = cspice_vperp(_a(3)_, _b(3)_)
+VPRJP: [vout(3)] = cspice_vprjp( vin(3), plane )
+VPRJPI: [vout(3), found] = cspice_vprjpi( vin(3), projpl, invpl )
+VPROJ: [_vproj(3)_] = cspice_vproj(_a(3)_, _b(3)_)
+VROTV: [r(3)] = cspice_vrotv( v(3), axis(3), theta)
+VSEP: [_sep_] = cspice_vsep(_v1(3)_, _v2(3)_)
+W	Top
+WNCARD: [card] = cspice_wncard(window)
+WNCOMD: [result] = cspice_wncomd( left, right, window)
+WNCOND: [window_f] = cspice_wncond( left, right, window)
+WNDIFD: [c] = cspice_wndifd( a, b )
+WNELMD: boolean = cspice_wnelmd( point, window )
+WNEXPD: [window_f] = cspice_wnexpd( left, right, window)
+WNEXTD: [window_f] = cspice_wnextd( side, window)
+WNFETD: [left, right] = cspice_wnfetd(window, n)
+WNFILD: [window_f] = cspice_wnfild( sml, window)
+WNFLTD: [window_f] = cspice_wnfltd( sml, window)
+WNINCD: boolean = cspice_wnincd( left, right, window )
+WNINSD: [window] = cspice_wninsd( left, right, [window_i] )
+WNINTD: [c] = cspice_wnintd( a, b )
+WNRELD: boolean = cspice_wnreld( a, `op`, b )
+WNSUMD: [ meas, avg, stddev, shortest, longest ] = cspice_wnsumd( window )
+WNUNID: [c] = cspice_wnunid( a, b )
+WNVALD: [window_f] = cspice_wnvald(window_i)
+X	Top
+XF2EUL: [_eulang(6)_, _unique_] = cspice_xf2eul(_xform(3,3)_, axisa, axisb, axisc)
+XF2RAV: [_rot(3,3)_, _av(3)_] = cspice_xf2rav(_xform(6,6)_)
+XFMSTA: [_output_state(6)_] = cspice_xfmsta( `_input_state(6)_`, `input_coord_sys`, `output_coord_sys`, `body`)
+
