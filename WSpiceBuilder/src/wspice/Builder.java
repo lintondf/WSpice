@@ -1,7 +1,10 @@
 package wspice;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,6 +56,7 @@ public class Builder {
 	StringBuffer packageUsages = new StringBuffer();
 	StringBuffer packageDeclarations = new StringBuffer();
 
+	protected static PrintStream log = System.out;
 	protected int indent = 0;
 
 	protected String nextLine(ListIterator<String> it) {
@@ -112,7 +116,7 @@ public class Builder {
 			String[] tokens = decl.split("[ |\\[|\\]|;]");
 			// for (String token : tokens) {
 			// if (!token.isEmpty()) {
-			// System.out.print("<" + token + "> " );
+			// log.print("<" + token + "> " );
 			// }
 			// }
 			try {
@@ -157,6 +161,9 @@ public class Builder {
 							} else if (tokens[i].equals("MAXVAL")) {
 								dims.add(514);
 								break;
+							} else if (tokens[i].startsWith("SIDLEN")) {
+								dims.add(514);
+								break;
 							} else if (tokens[i].equals("=")) {
 								dims.add(-1);
 								break;
@@ -194,10 +201,10 @@ public class Builder {
 			String[] tokens = line.split(" |,");
 			// for (String token : tokens ) {
 			// if (!token.isEmpty()) {
-			// System.out.print("<" + token + "> ");
+			// log.print("<" + token + "> ");
 			// }
 			// }
-			// System.out.println();
+			// log.println();
 			int i = 1;
 			while (i < tokens.length && tokens[i].isEmpty())
 				i++;
@@ -493,7 +500,7 @@ public class Builder {
 	}
 
 	public boolean scanFunction(ListIterator<String> it, String name) throws Exception {
-		System.out.println(name);
+		log.println(name);
 		boolean hasExtra = false;
 		boolean hasCheckNum = false;
 		boolean hasArgCheck = false;
@@ -545,7 +552,7 @@ public class Builder {
 			if (!line.isEmpty()) {
 				Variable var = new Variable();
 				var.parse(line);
-				// System.out.println("  >" + var);
+				// log.println("  >" + var);
 				vars.put(var.name, var);
 			}
 		}
@@ -567,7 +574,7 @@ public class Builder {
 						line = nextNonBlank(it);
 						break;
 					} else if (line.endsWith(",")) {
-						// System.out.println("  -" + line );
+						// log.println("  -" + line );
 						ArgCheck ac = new ArgCheck();
 						ac.parse(line);
 						args.put(ac.name, ac);
@@ -590,7 +597,7 @@ public class Builder {
 				inChecks = true;
 				line = nextNonBlank(it);
 				// } else {
-				// System.out.println("? " + line);
+				// log.println("? " + line);
 				// line = nextNonBlank( it );
 			}
 		}
@@ -599,19 +606,19 @@ public class Builder {
 				Parameter param = new Parameter("lhs", "Real", 0);
 				output.add(param);
 			} else {
-				System.out.println("  !"
+				log.println("  !"
 						+ line.substring(ONE_LINE_TOKEN.length()));
 			}
 		} else {
 			// scan up to C function invocation
-			if (target != null) System.out.println("? " + line);
+			if (target != null) log.println("? " + line);
 			String baseName = name;
 			int idx = baseName.indexOf("_");
 			if (idx >= 0) {
 				baseName = baseName.substring(0,idx);
 			}
 			while (line != null && line.indexOf(baseName) == -1) {
-				if (target != null) System.out.println("  @" + line);
+				if (target != null) log.println("  @" + line);
 				if (line.startsWith("/*")) {
 					while(!line.endsWith("*/")) {
 						line = nextNonBlank(it);
@@ -619,12 +626,28 @@ public class Builder {
 					line = nextNonBlank(it);
 					continue;
 				}
-				if (line.indexOf("mxGetNumberOfElements") == -1) {
+				if (line.indexOf("mxGetString") >= 0) {
+					String[] tokens = splitNoEmpties(line, "\\(|\\)|\\[|\\]|\\,| ");
+					if (tokens.length >= 4 && tokens[0].equals("mxGetString") && tokens[1].equals("prhs")) {
+						Parameter param = new Parameter();
+						try {
+							param.name = tokens[3];
+							param.position = Integer.parseInt(tokens[2]);
+							param.type = "String";
+							input.add(param);
+						} catch (Exception x) {
+							System.err.println(x);
+							System.err.println("  @??? " + line );
+						}
+					} else {
+						System.err.println("  @??? " + line );
+					}
+				} else if (line.indexOf("mxGetNumberOfElements") == -1) {
 					String[] tokens = splitNoEmpties(line, " ");
 					if (args.containsKey(tokens[0])) {
 						Parameter param = new Parameter();
 						if (!param.parse(args, vars, line)) {
-							System.out.println(" @? " + line);
+							log.println(" @? " + line);
 							break;
 						}
 						if (param.isOutput) {
@@ -637,7 +660,7 @@ public class Builder {
 				line = nextNonBlank(it);
 			}
 		}
-		// System.out.println("  ." + line);
+		// log.println("  ." + line);
 		HashMap<String, Parameter> fields = new HashMap<String, Parameter>();
 		StringBuffer call = new StringBuffer();
 		Vector<String> sizearray = new Vector<String>();
@@ -675,7 +698,7 @@ public class Builder {
 //					Parameter field = parseField(fline.toString());
 //					fields.put(field.name, field);
 //				} else {
-//					System.out.println(line);
+//					log.println(line);
 //					if (line.startsWith("sizearray[")) {
 //						sizearray.add(line);
 //					}
@@ -688,11 +711,56 @@ public class Builder {
 //				}
 //			} else if (call.length() > 0) {
 //				if (!line.isEmpty())
-//					System.out.println("[" + name + "]: " + line );
+//					log.println("[" + name + "]: " + line );
 //			}
 		}
 		
 		
+		StringBuffer sb;
+		outputMathematicaFunctionDefinition(name, doc, output, input, fields);
+		
+		// Output usage block
+		
+		packageUsages.append(name + "::usage = ");
+		packageUsages.append( String.format("\"%s\";\n", doc.usage.toString()) );
+		// Output expected block
+		packageUsages.append("  " + name + "::expected = ");
+		sb = new StringBuffer();
+		inputSignature(name, input, sb, true, false);
+		packageUsages.append( String.format("\"%s]\";\n", sb.toString()) );
+		if (!input.isEmpty()) {
+			sb = new StringBuffer();
+			inputSignature(name, input, sb, false, false);
+			packageUsages.append( String.format("  %s] := Message[%s::expected];\n",
+					sb.toString(), name ));
+		}
+		packageUsages.append( String.format("  %s[___] := Message[%s::expected];\n", name,
+				name) );
+		
+		if (target != null) {
+			log.println("I " + input.size());
+			for (Parameter p : input) {
+				log.println( "I: " + p );
+			}
+			log.println("O " + output.size());
+			for (Parameter p : output) {
+				log.println( "O: " + p );
+			}
+			log.println("V " + vars.size());
+			for (String key : vars.keySet()) {
+				log.println("V: " + vars.get(key));
+			}
+			log.println("A " + args.size());
+			for (String key : args.keySet()) {
+				log.println("A: " + args.get(key));
+			}
+		}
+		return true;
+	}
+
+	protected void outputMathematicaFunctionDefinition(String name,
+			Documentation doc, Vector<Parameter> output,
+			Vector<Parameter> input, HashMap<String, Parameter> fields) {
 		// Output Mathematica function declaration
 		StringBuffer sb = new StringBuffer();
 		sb.append("(* ");
@@ -708,12 +776,12 @@ public class Builder {
 		sb.append(" *)\n");
 		if (output.isEmpty() && !fields.isEmpty()) {
 			// for (String var : vars.keySet()) {
-			// System.out.println( "  :v: " + vars.get(var));
+			// log.println( "  :v: " + vars.get(var));
 			// }
 			// for (String var : fields.keySet()) {
-			// System.out.println( "  :f: " + fields.get(var));
+			// log.println( "  :f: " + fields.get(var));
 			// }
-			// System.out.println();
+			// log.println();
 			sb.append("$");
 			sb.append(name);
 			sb.append(" = ");
@@ -772,44 +840,6 @@ public class Builder {
 		sb.append(" ];");
 		sb.append("\n");
 		packageDeclarations.append(sb.toString());
-		
-		// Output usage block
-		
-		packageUsages.append(name + "::usage = ");
-		packageUsages.append( String.format("\"%s\";\n", doc.usage.toString()) );
-		// Output expected block
-		packageUsages.append("  " + name + "::expected = ");
-		sb = new StringBuffer();
-		inputSignature(name, input, sb, true, false);
-		packageUsages.append( String.format("\"%s]\";\n", sb.toString()) );
-		if (!input.isEmpty()) {
-			sb = new StringBuffer();
-			inputSignature(name, input, sb, false, false);
-			packageUsages.append( String.format("  %s] := Message[%s::expected];\n",
-					sb.toString(), name ));
-		}
-		packageUsages.append( String.format("  %s[___] := Message[%s::expected];\n", name,
-				name) );
-		
-		if (target != null) {
-			System.out.println("I " + input.size());
-			for (Parameter p : input) {
-				System.out.println( "I: " + p );
-			}
-			System.out.println("O " + output.size());
-			for (Parameter p : output) {
-				System.out.println( "O: " + p );
-			}
-			System.out.println("V " + vars.size());
-			for (String key : vars.keySet()) {
-				System.out.println("V: " + vars.get(key));
-			}
-			System.out.println("A " + args.size());
-			for (String key : args.keySet()) {
-				System.out.println("A: " + args.get(key));
-			}
-		}
-		return true;
 	}
 
 	// called for lines starting with plhs
@@ -825,7 +855,7 @@ public class Builder {
 			Vector<String> outputNames,
 			Vector<String> sizearray, Vector<Parameter> output, HashMap<String, Variable> vars,
 			HashMap<String, ArgCheck> args) throws Exception {
-		System.out.println("parseResult: " + line);
+		log.println("parseResult: " + line);
 		String[] tokens = splitNoEmpties( line, " |,|\\[|\\]|\\(|\\)" );
 		if (tokens[0].equals("plhs") && tokens[2].equals("=")) {
 			int position = Integer.parseInt(tokens[1]);
@@ -964,14 +994,14 @@ public class Builder {
 				if (tokens[0].length() == 1)
 					continue;
 				// for (String token : tokens) {
-				// System.out.print("<"+token.trim()+">");
+				// log.print("<"+token.trim()+">");
 				// }
-				// System.out.println();
+				// log.println();
 				index.put(tokens[0].trim().substring(0, tokens[0].length() - 3)
 						.toLowerCase(), tokens[1].trim());
 			}
 			// for (String name : index.keySet()) {
-			// System.out.println(name + " - " + index.get(name));
+			// log.println(name + " - " + index.get(name));
 			// }
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -1017,16 +1047,25 @@ public class Builder {
 							if (line.startsWith(" *      ") && line.charAt(8) != ' ') {
 								String[] decl = line.substring(8).split(" ", 2);
 								if (decl.length < 2) {
-									System.err.println(name +":" +"R! " + line );
+									if (decl.length == 1) {
+										if (decl[0].equals("None.")) {
+											continue;
+										} else if (decl[0].endsWith(",")) {
+											//log.println(name +":" +"R, " + decl[0]);
+											continue; // TODO accumlate variable list
+										}
+									} else {
+										System.err.println(name +":" +"R! " + line );
+									}
 									break;
 								}
-								System.out.println(name +":" +"R; " + decl[0]);
-								System.out.println(name +":" +"R: " + decl[1].trim() );
+								//log.println(name +":" +"R; " + decl[0]);
+								//log.println(name +":" +"R: " + decl[1].trim() );
 								line = decl[1].trim();
 								if (line.startsWith("a ") || line.startsWith("the ")) {
 									
 								} else {
-									System.out.println(name +":" + "R? " + line );
+									//log.println(name +":" + "R? " + line );
 								}
 								while (lit.hasNext()) {
 									line = lit.next();
@@ -1042,7 +1081,7 @@ public class Builder {
 										} else {
 											lit.previous();
 										}
-										System.out.println(name +":" +"R# " + line );
+										//log.println(name +":" +"R# " + line );
 									}
 								}
 							}
@@ -1052,7 +1091,7 @@ public class Builder {
 				}
 			}
 			if (results == null) {
-				System.err.println("Missing return block: " + name );
+				log.println(name + ":Missing return block" );
 			}
 		}
 
@@ -1113,21 +1152,22 @@ public class Builder {
 					}
 					if (line != null && line.startsWith("function")) {
 						mfunc = new StringBuffer();
-						line = line.replaceAll("          ", " ");
-						line = line.replaceAll("         ", " ");
-						line = line.replaceAll("        ", " ");
-						line = line.replaceAll("       ", " ");
-						line = line.replaceAll("      ", " ");
-						line = line.replaceAll("     ", " ");
-						line = line.replaceAll("    ", " ");
-						line = line.replaceAll("   ", " ");
-						line = line.replaceAll("  ", " ");
+						line = line.replaceAll("\\s{2,}", " ").trim();
+//						line = line.replaceAll("          ", " ");
+//						line = line.replaceAll("         ", " ");
+//						line = line.replaceAll("        ", " ");
+//						line = line.replaceAll("       ", " ");
+//						line = line.replaceAll("      ", " ");
+//						line = line.replaceAll("     ", " ");
+//						line = line.replaceAll("    ", " ");
+//						line = line.replaceAll("   ", " ");
+//						line = line.replaceAll("  ", " ");
 						mfunc.append(line.replaceAll("\\.\\.\\.", ""));
 						while (line != null && line.endsWith("...")) {
 							line = nextDocLine(it, name);
 							mfunc.append(line.replaceAll("\\.\\.\\.", ""));
 						}
-						System.out.println("% " + mfunc.toString());
+						log.println("% " + mfunc.toString().replaceAll("\\s{2,}", " ").trim());
 					}
 				}
 			} catch (IOException e) {
@@ -1136,7 +1176,7 @@ public class Builder {
 		}
 	}
 
-	private final String target = null; //"bodvcd"; // "bodn2c";
+	private final String target = null;
 	private HashSet<String> exclude = new HashSet<String>();
 
 	public void translate() {
@@ -1193,7 +1233,7 @@ public class Builder {
 				if (line.startsWith(FUNCTION_TOKEN1)) { // cspice_
 					name = line.substring(FUNCTION_TOKEN1.length());
 					name = name.substring(0, name.indexOf('('));
-					// System.out.println( name );
+					// log.println( name );
 					while (!line.endsWith(")")) {
 						line = nextLine(it);
 					}
@@ -1229,9 +1269,11 @@ public class Builder {
 					}
 				}
 			}
-//			System.out.printf(packageTemplate, 
-//					packageUsages.toString().substring(0, 1), 
-//					packageDeclarations.toString() );
+			PrintStream packageFile = new PrintStream( new FileOutputStream( new File("wspice.wl") ) );
+			packageFile.printf(packageTemplate, 
+					packageUsages.toString().substring(0, 1), 
+					packageDeclarations.toString() );
+			packageFile.close();
 		} catch (Exception e) {
 			System.err.printf("		exclude.add(\"%s\");\n", name );
 			e.printStackTrace();
@@ -1245,7 +1287,7 @@ public class Builder {
 		boolean isVectorizable;
 		
 		public String toString() {
-			String dimsString = "0";
+			String dimsString = "scalar";
 			if (dims != null) {
 				if (dims.equals("()"))
 					dimsString = "*";
@@ -1262,7 +1304,7 @@ public class Builder {
 				if (j >= 0) {
 					dims = decl.substring(i, j+1);
 				} else {
-					System.out.println(decl);
+					log.println(decl);
 				}
 				decl = decl.substring(0, i);
 			}
@@ -1303,7 +1345,7 @@ public class Builder {
 		}
 	}
 	
-	HashMap<String, Vector<Result>> callingSequences = new HashMap<String, Vector<Result>>();
+	HashMap<String, Vector<Result>> outputSequences = new HashMap<String, Vector<Result>>();
 	
 	public void scanCallSequenceIndex(String filename) {
 		File mice = new File( (isMacOS) ? "/Users/lintondf/GIT/WSpice/": 
@@ -1314,7 +1356,7 @@ public class Builder {
 			ListIterator<String> it = lines.listIterator();
 			while (it.hasNext()) {
 				String line = nextLine(it);
-				//System.out.println(line.length() + " [" + line + "]");
+				//log.println(line.length() + " [" + line + "]");
 				if (line.equals("A"))
 					break;
 			}
@@ -1328,46 +1370,50 @@ public class Builder {
 				String[] tokens = splitNoEmpties(line, ":| |\\[|\\]");
 				if (tokens.length < 3) {
 					for (String token : tokens) {
-						System.out.print("<"+ token + ">");
+						log.print("<"+ token + ">");
 					}
-					System.out.println();
+					log.println();
 					continue;
 				}
 				String allCapsName = tokens[0];
 				Vector<Result> results = Result.parseDeclaration( tokens );
-				callingSequences.put( allCapsName.toLowerCase(), results );
+				outputSequences.put( allCapsName.toLowerCase(), results );
 			}
 			
 			ArrayList<String> keys = new ArrayList<String>();
-			keys.addAll(callingSequences.keySet());
+			if (target == null) {
+				keys.addAll(outputSequences.keySet());
+			} else {
+				keys.add( target );
+			}
 			Collections.sort( keys );
 			for (String key : keys ) {
-				System.out.print(key + " : ");
-				Vector<Result> results = callingSequences.get(key);
+				log.print(key + " : ");
+				Vector<Result> results = outputSequences.get(key);
 				for (Result r : results) {
-					System.out.print("{" + r +"} " );
+					log.print("{" + r +"} " );
 				}
-				System.out.println();
+				log.println();
 			}
 			for (String key : keys ) {
-				Vector<Result> results = callingSequences.get(key);
+				Vector<Result> results = outputSequences.get(key);
 				if (results == null)
-					System.out.println(key + " Null Results");
+					log.println(key + " Null Results");
 			}
 			for (String key : keys ) {
-				Vector<Result> results = callingSequences.get(key);
+				Vector<Result> results = outputSequences.get(key);
 				if (results != null && results.isEmpty())
-					System.out.println(key + " Empty Results");
+					log.println(key + " Empty Results");
 			}
 			for (String key : keys ) {
-				Vector<Result> results = callingSequences.get(key);
+				Vector<Result> results = outputSequences.get(key);
 				if (results != null && results.size() == 1)
-					System.out.println(key + " One Result " + results.get(0) );
+					log.println(key + " One Result " + results.get(0) );
 			}
 			for (String key : keys ) {
-				Vector<Result> results = callingSequences.get(key);
+				Vector<Result> results = outputSequences.get(key);
 				if (results != null && results.size() > 1)
-					System.out.println(key + " Many Results");
+					log.println(key + " Many Results");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1375,8 +1421,13 @@ public class Builder {
 	}
 
 	public static void main(String[] args) {
-		Builder builder = new Builder();
-		builder.scanCallSequenceIndex("mice_index.txt");
-		builder.translate();
+		try {
+			log = new PrintStream( new FileOutputStream( new File("log.txt") ) );
+			Builder builder = new Builder();
+			builder.scanCallSequenceIndex("mice_index.txt");
+			builder.translate();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 }
