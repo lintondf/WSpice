@@ -252,7 +252,7 @@ DLLEXPORT int wspice_axisar(WolframLibraryData libData, mint Argc,
 //	axisar_c( libData->MTensor_getRealData(axis), angle, libData->MTensor_getRealData(r) );
 
 	int nrhs = 2;
-	void*  prhs[3];
+	void*  prhs[2+1];
 	prhs[0] = 0;
 	prhs[1] = libData->MTensor_getRealData(axis);
 	prhs[2] = &angle;

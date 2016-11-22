@@ -5,14 +5,17 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../src/main.c \
+../src/mice.c \
 ../src/wspice.c 
 
 OBJS += \
 ./src/main.o \
+./src/mice.o \
 ./src/wspice.o 
 
 C_DEPS += \
 ./src/main.d \
+./src/mice.d \
 ./src/wspice.d 
 
 
