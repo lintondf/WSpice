@@ -3,7 +3,7 @@
 
 // Matlab Mex Interface Replacement
 
-typedef MTensor       mxArray;
+//typedef MTensor       mxArray;
 
 #define mxINT32_CLASS MType_Integer
 #define mxREAL        MType_Double

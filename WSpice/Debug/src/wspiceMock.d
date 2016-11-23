@@ -1,4 +1,4 @@
-src/wspice.d: ../src/wspice.c \
+src/wspiceMock.d: ../src/wspiceMock.c \
   /Applications/Mathematica.app/Contents/Frameworks/mathlink.framework/Versions/4.36/Headers/mathlink.h \
   /Applications/Mathematica.app/Contents//SystemFiles/IncludeFiles/C/WolframLibrary.h \
   /Applications/Mathematica.app/Contents//SystemFiles/IncludeFiles/C/dllexport.h \
@@ -19,11 +19,7 @@ src/wspice.d: ../src/wspice.c \
   /Users/lintondf/cspice/include/SpiceEll.h \
   /Users/lintondf/cspice/include/SpiceZim.h \
   /Users/lintondf/cspice/include/SpiceZrnm.h \
-  /Users/lintondf/cspice/include/SpiceZmc.h \
-  /Users/lintondf/cspice/include/SpiceZfc.h \
-  /Users/lintondf/GIT/WSpice/WSpice/src/wspice.h \
-  /Users/lintondf/cspice/include/zzerror.h \
-  /Users/lintondf/cspice/include/zzalloc.h
+  /Users/lintondf/GIT/WSpice/WSpice/src/mice.h
 
 /Applications/Mathematica.app/Contents/Frameworks/mathlink.framework/Versions/4.36/Headers/mathlink.h:
 
@@ -65,12 +61,4 @@ src/wspice.d: ../src/wspice.c \
 
 /Users/lintondf/cspice/include/SpiceZrnm.h:
 
-/Users/lintondf/cspice/include/SpiceZmc.h:
-
-/Users/lintondf/cspice/include/SpiceZfc.h:
-
-/Users/lintondf/GIT/WSpice/WSpice/src/wspice.h:
-
-/Users/lintondf/cspice/include/zzerror.h:
-
-/Users/lintondf/cspice/include/zzalloc.h:
+/Users/lintondf/GIT/WSpice/WSpice/src/mice.h:

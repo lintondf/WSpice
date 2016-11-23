@@ -12,7 +12,6 @@ void MLPutInteger() {}
 void MLPutString() {}
 void MLPutSymbol() {}
 void MLTestHead() {}
-void mice_fail() {}
 void loadTestData();
 
 int main( int argc, char* argv[]) {

@@ -6,24 +6,27 @@
 C_SRCS += \
 ../src/main.c \
 ../src/mice.c \
-../src/wspice.c 
+../src/wspice.c \
+../src/wspiceMock.c 
 
 OBJS += \
 ./src/main.o \
 ./src/mice.o \
-./src/wspice.o 
+./src/wspice.o \
+./src/wspiceMock.o 
 
 C_DEPS += \
 ./src/main.d \
 ./src/mice.d \
-./src/wspice.d 
+./src/wspice.d \
+./src/wspiceMock.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
 src/%.o: ../src/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
-	gcc -I/Users/lintondf/cspice/mice -I/Users/lintondf/cspice/include -I/Applications/Mathematica.app/Contents//SystemFiles/IncludeFiles/C/ -I/Applications/Mathematica.app/Contents/Frameworks/mathlink.framework/Versions/4.36/Headers -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	gcc -I/Users/lintondf/GIT/WSpice/WSpice/src -I/Users/lintondf/cspice/mice -I/Users/lintondf/cspice/include -I/Applications/Mathematica.app/Contents//SystemFiles/IncludeFiles/C/ -I/Applications/Mathematica.app/Contents/Frameworks/mathlink.framework/Versions/4.36/Headers -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

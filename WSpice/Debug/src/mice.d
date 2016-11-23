@@ -1,4 +1,4 @@
-src/mice.d: ../src/mice.c ../src/mex.h \
+src/mice.d: ../src/mice.c /Users/lintondf/GIT/WSpice/WSpice/src/mex.h \
   /Users/lintondf/cspice/include/SpiceUsr.h \
   /Users/lintondf/cspice/include/SpiceZpl.h \
   /Users/lintondf/cspice/include/SpiceZdf.h \
@@ -16,16 +16,20 @@ src/mice.d: ../src/mice.c ../src/mex.h \
   /Users/lintondf/cspice/include/SpiceZim.h \
   /Users/lintondf/cspice/include/SpiceZrnm.h \
   /Users/lintondf/cspice/include/SpiceZmc.h \
-  /Users/lintondf/cspice/include/SpiceZfc.h ../src/mice.h \
+  /Users/lintondf/cspice/include/SpiceZfc.h \
+  /Users/lintondf/GIT/WSpice/WSpice/src/mice.h \
   /Applications/Mathematica.app/Contents/Frameworks/mathlink.framework/Versions/4.36/Headers/mathlink.h \
   /Applications/Mathematica.app/Contents//SystemFiles/IncludeFiles/C/WolframLibrary.h \
   /Applications/Mathematica.app/Contents//SystemFiles/IncludeFiles/C/dllexport.h \
   /Applications/Mathematica.app/Contents//SystemFiles/IncludeFiles/C/extern.h \
-  ../src/zzmice.h /Users/lintondf/cspice/include/zzerror.h \
-  /Users/lintondf/cspice/include/zzalloc.h ../src/cspice_params.h \
-  ../src/matrix.h /Users/lintondf/cspice/mice/npf_cspice.h
+  /Users/lintondf/GIT/WSpice/WSpice/src/zzmice.h \
+  /Users/lintondf/cspice/include/zzerror.h \
+  /Users/lintondf/cspice/include/zzalloc.h \
+  /Users/lintondf/GIT/WSpice/WSpice/src/cspice_params.h \
+  /Users/lintondf/GIT/WSpice/WSpice/src/matrix.h \
+  /Users/lintondf/cspice/mice/npf_cspice.h
 
-../src/mex.h:
+/Users/lintondf/GIT/WSpice/WSpice/src/mex.h:
 
 /Users/lintondf/cspice/include/SpiceUsr.h:
 
@@ -63,7 +67,7 @@ src/mice.d: ../src/mice.c ../src/mex.h \
 
 /Users/lintondf/cspice/include/SpiceZfc.h:
 
-../src/mice.h:
+/Users/lintondf/GIT/WSpice/WSpice/src/mice.h:
 
 /Applications/Mathematica.app/Contents/Frameworks/mathlink.framework/Versions/4.36/Headers/mathlink.h:
 
@@ -73,14 +77,14 @@ src/mice.d: ../src/mice.c ../src/mex.h \
 
 /Applications/Mathematica.app/Contents//SystemFiles/IncludeFiles/C/extern.h:
 
-../src/zzmice.h:
+/Users/lintondf/GIT/WSpice/WSpice/src/zzmice.h:
 
 /Users/lintondf/cspice/include/zzerror.h:
 
 /Users/lintondf/cspice/include/zzalloc.h:
 
-../src/cspice_params.h:
+/Users/lintondf/GIT/WSpice/WSpice/src/cspice_params.h:
 
-../src/matrix.h:
+/Users/lintondf/GIT/WSpice/WSpice/src/matrix.h:
 
 /Users/lintondf/cspice/mice/npf_cspice.h:

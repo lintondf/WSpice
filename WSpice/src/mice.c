@@ -478,8 +478,9 @@ struct bucket *Bucket( char *key,
 
    if ( b == NULL )
       {
-      mexErrMsgTxt( "MICE(MALLOCFAILED): malloc failed in struct bucket. "
-                    "This is a fatal error. Please contact NAIF.");
+//TODO avoid this comment out of
+//      mexErrMsgTxt( "MICE(MALLOCFAILED): malloc failed in struct bucket. "
+//                    "This is a fatal error. Please contact NAIF.");
       }
 
    b->key      = key;
@@ -566,7 +567,8 @@ void cspice_mice(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
    plhs[0] = mxCreateString( value );
    if ( plhs[0] == NULL )
       {
-      mexErrMsgTxt( "MICE(BUG): mxCreateString failed in cspice_mice" );
+//TODO avoid this code edit.  Global libData?
+//      mexErrMsgTxt( "MICE(BUG): mxCreateString failed in cspice_mice" );
       }
 
    }

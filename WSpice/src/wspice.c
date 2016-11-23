@@ -13,6 +13,16 @@
 #include "SpiceZmc.h"
 #include "SpiceZfc.h"
 
+//TODO get from mice.h mock
+typedef struct M_TENSOR_STRUCT       mxArray;
+
+void mice_fail( int cnt );
+void wsSetLibraryData( WolframLibraryData _libData );
+
+void cspice_axisar(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+
+//
+
 #include "wspice.h"
 #include "zzerror.h"
 #include "zzalloc.h"
@@ -36,7 +46,7 @@ void loadTestData() {
 
 FILE *open_memstream(char **ptr, size_t *sizeloc);
 
-static FILE*    debug;
+FILE*    debug;
 static char*    debugBuffer;
 static size_t   debugBufLen;
 
@@ -55,14 +65,14 @@ static void printToMathematica(WolframLibraryData libData, const char* msg) {
 		MLNewPacket(link);
 }
 
-static void flushDebug( WolframLibraryData libData ) {
+void flushDebug( WolframLibraryData libData ) {
 	fclose(debug);
 	printToMathematica( libData, debugBuffer );
 	free(debugBuffer);
 	debug = open_memstream( &debugBuffer, &debugBufLen);
 }
 
-static void reportErrorToMathematica(WolframLibraryData libData, const char* out, const char* msg) {
+void reportErrorToMathematica(WolframLibraryData libData, const char* out, const char* msg) {
 	int pkt;
 	MLINK link = libData->getMathLink(libData);
 	MLPutFunction(link, "EvaluatePacket", 1);
@@ -83,9 +93,10 @@ static void reportErrorToMathematica(WolframLibraryData libData, const char* out
 		MLNewPacket(link);
 }
 
+static char smsg[1800];
+static char msg[1800];
+
 static char* cleanErrorMessage(WolframLibraryData libData) {
-	char smsg[1800];
-	char msg[1800];
 	getmsg_c("SHORT", sizeof(smsg), smsg);
 	char* out = smsg + 6;  // skip SPICE(
 	int n = strlen(out);
@@ -121,7 +132,8 @@ Calculate/assign common values, size of the default string length.
 Note, find the DEFAULT_STR_LENGTH definitions in mice.h.
 
 */
-SpiceInt default_str_size = DEFAULT_STR_LENGTH * sizeof(SpiceChar);
+//SpiceInt default_str_size = DEFAULT_STR_LENGTH * sizeof(SpiceChar);
+extern SpiceInt default_str_size;
 
 static const int true = 1;
 static const int false = 0;
@@ -143,9 +155,6 @@ MTensor wspice_Integer_new(WolframLibraryData libData, mint value) {
 	return t;
 }
 
-#define mice_fail( cnt ) \
-	fprintf(debug, "mice_fail: %ld", cnt ); \
-	flushDebug(libData);
 
 #define zzmice_CreateIntScalar( n ) \
 		wspice_Integer_new( libData, n )
@@ -241,21 +250,20 @@ struct         extra_dims  * mice_checkargs(int                 nlhs,
 /*{{Real,2,"Constant"}, Real}, {Real,2}*/
 DLLEXPORT int wspice_axisar(WolframLibraryData libData, mint Argc,
 		MArgument *Args, MArgument Res) {
+	wsSetLibraryData( libData );
 	MTensor axis = MArgument_getMTensor(Args[0]);
 	double angle = MArgument_getReal(Args[1]);
 
-	int err = LIBRARY_NO_ERROR;
 	mint dims[2] = {3,3};
 	MTensor r;
-	err = libData->MTensor_new(MType_Real, 2, dims, &r);
-	RETURN_IF_MATHEMATICA_FALSE(err != LIBRARY_NO_ERROR, "Unable to allocate output matrix");
-//	axisar_c( libData->MTensor_getRealData(axis), angle, libData->MTensor_getRealData(r) );
+	RETURN_IF_MATHEMATICA_FALSE(libData->MTensor_new(MType_Real, 2, dims, &r) == LIBRARY_NO_ERROR, "Unable to allocate output matrix");
 
 	int nrhs = 2;
-	void*  prhs[2+1];
-	prhs[0] = 0;
-	prhs[1] = libData->MTensor_getRealData(axis);
-	prhs[2] = &angle;
+	const mxArray*  prhs[2+1];
+	prhs[0] = (const mxArray*)libData;  // in mice the first parameter was the function name string; we use it to make
+	                    // the WolframLibraryData pointer available
+	prhs[1] = (const mxArray*)libData->MTensor_getRealData(axis);
+	prhs[2] = (const mxArray*)&angle;
 	fprintf(debug, "axisar 1 %lg %lg %lg  %lg",
 			libData->MTensor_getRealData(axis)[0],
 			libData->MTensor_getRealData(axis)[1],
@@ -264,8 +272,11 @@ DLLEXPORT int wspice_axisar(WolframLibraryData libData, mint Argc,
 	flushDebug(libData);
 
 	int nlhs = 1;
-	void*  plhs[1];
-	plhs[0] = libData->MTensor_getRealData(r);
+	mxArray*  plhs[1];
+	plhs[0] = (mxArray*)libData->MTensor_getRealData(r);
+#ifndef INCLUDE_BODY
+	cspice_axisar( nlhs, plhs, nrhs, prhs );
+#else
 	   {
 
 	   SpiceDouble  * axis;
@@ -300,6 +311,7 @@ DLLEXPORT int wspice_axisar(WolframLibraryData libData, mint Argc,
 
 	   xpose_c( xr, (SpiceDouble(*)[3])r );
 	   }
+#endif
 	RETURN_IF_CSPICE_ERROR
 	MArgument_setMTensor(Res, r);
 

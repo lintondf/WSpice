@@ -23,7 +23,7 @@
 								<option id="macosx.c.link.option.libs.174631675" name="Libraries (-l)" superClass="macosx.c.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="cspice"/>
 								</option>
-								<option id="macosx.c.link.option.paths.119849008" superClass="macosx.c.link.option.paths" valueType="libPaths">
+								<option id="macosx.c.link.option.paths.119849008" name="Library search path (-L)" superClass="macosx.c.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="/Users/lintondf/cspice/lib"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.macosx.c.linker.input.1654853708" superClass="cdt.managedbuild.tool.macosx.c.linker.input">
@@ -65,6 +65,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.exe.debug.1423382253" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.exe.debug.157448898"/>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.macosx.exe.debug.2088918242" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.macosx.exe.debug.1493794755">
 								<option id="gnu.c.compiler.option.include.paths.516476471" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/Users/lintondf/GIT/WSpice/WSpice/src"/>
 									<listOptionValue builtIn="false" value="/Users/lintondf/cspice/mice"/>
 									<listOptionValue builtIn="false" value="/Users/lintondf/cspice/include"/>
 									<listOptionValue builtIn="false" value="/Applications/Mathematica.app/Contents//SystemFiles/IncludeFiles/C/"/>
@@ -120,7 +121,7 @@
 							<targetPlatform id="cdt.managedbuild.target.gnu.platform.macosx.exe.release.1192943625" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.macosx.exe.release"/>
 							<builder buildPath="${workspace_loc:/WSpice}/Release" id="cdt.managedbuild.target.gnu.builder.macosx.exe.release.1714866059" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.macosx.exe.release"/>
 							<tool id="cdt.managedbuild.tool.macosx.c.linker.macosx.exe.release.891235590" name="MacOS X C Linker" superClass="cdt.managedbuild.tool.macosx.c.linker.macosx.exe.release">
-								<option id="macosx.c.link.option.libs.2115673036" superClass="macosx.c.link.option.libs" valueType="libs">
+								<option id="macosx.c.link.option.libs.2115673036" name="Libraries (-l)" superClass="macosx.c.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="/Users/lintondf/cspice/lib/cspice.a"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.macosx.c.linker.input.1646748685" superClass="cdt.managedbuild.tool.macosx.c.linker.input">

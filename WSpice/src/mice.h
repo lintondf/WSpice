@@ -13,7 +13,12 @@ typedef char          mxChar;
 
 #define mxDOUBLE_CLASS 0
 
-void mexErrMsgTxt( const char* );
+void mice_fail( long cnt );
+
+void wsSetLibraryData( WolframLibraryData _libData );
+
+void mexErrMsgTxt( const char* str );
+
 void mexAtExit( void* );
 int mxGetString( const mxArray*, char*, int );
 mxArray* mxCreateString( const char* );
@@ -31,7 +36,7 @@ void mxFree( void* );
 void mxDestroyArray( const mxArray* );
 mxArray* mxGetField( const mxArray* p, mint index, const char* field );
 mxArray* mxSetField( const mxArray* p, mint index, const char* field, void* pv );
-char* mxGetChars( const mxArray* );
+const char* mxGetChars( const mxArray* );
 #define mxGetData(pt) ((WolframLibraryData) prhs[0])->MTensor_getRealData((MTensor) pt)
 #define mxGetPr(pt) ((WolframLibraryData) prhs[0])->MTensor_getRealData((MTensor) pt)
 
@@ -285,4 +290,6 @@ alloc_SpiceString_C_array/alloc_SpiceString_Pointer_array routines.
                 }
 
 
+
+void cspice_axisar(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 #endif
