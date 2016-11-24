@@ -278,44 +278,7 @@ DLLEXPORT int wspice_axisar(WolframLibraryData libData, mint Argc,
 	int nlhs = 1;
 	mxArray*  plhs[1];
 	plhs[0] = (mxArray*) r; /*(mxArray*)libData->MTensor_getRealData(r);*/
-#ifndef INCLUDE_BODY
 	cspice_axisar( nlhs, plhs, nrhs, prhs );
-#else
-	   {
-
-	   SpiceDouble  * axis;
-	   SpiceDouble    angle;
-	   SpiceDouble  * r;
-	   SpiceDouble    xr[3][3];
-
-	   struct extra_dims *extra;
-	   struct argcheck ArgCheck[] =
-	      {
-	      { "axis",  MiceDouble, 1, {3},    0},
-	      { "angle", MiceDouble, 0, {0},    0},
-	      { "r",     MiceDouble, 2, {3, 3}, 0},
-	      };
-
-	   check_arg_num( nrhs, nlhs, 2, 1 );
-
-	   extra = mice_checkargs(nlhs,plhs,nrhs,prhs,ArgCheck);
-
-	   axis   = A_DBL_ARGV(1);
-	   angle  = S_DBL_ARGV(2);
-	   r      = A_DBL_RET_ARGV(0);
-		fprintf(debug, "axisar 2 %lg %lg %lg  %lg",
-				axis[0],
-				axis[1],
-				axis[1],
-				angle );
-		flushDebug(libData);
-
-	   axisar_c( axis, angle, (SpiceDouble(*)[3])xr);
-//	   CHECK_CALL_FAILURE(SCALAR);
-
-	   xpose_c( xr, (SpiceDouble(*)[3])r );
-	   }
-#endif
 	RETURN_IF_CSPICE_ERROR
 	MArgument_setMTensor(Res, r);
 
