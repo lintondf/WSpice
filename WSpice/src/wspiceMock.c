@@ -14,6 +14,11 @@ void wsSetLibraryData( WolframLibraryData _libData ) {
 	libData = _libData;
 }
 
+void wsMessage(const char* str ) {
+	fprintf(debug, "%s", str );
+	flushDebug(libData);
+}
+
 void mice_fail( long cnt ) {
 	fprintf(debug, "mice_fail: %ld", cnt );
 	flushDebug(libData);

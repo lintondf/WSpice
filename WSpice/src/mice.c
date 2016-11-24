@@ -599,7 +599,6 @@ void cspice_axisar(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
       { "angle", MiceDouble, 0, {0},    0},
       { "r",     MiceDouble, 2, {3, 3}, 0},
       };
-
    check_arg_num( nrhs, nlhs, 2, 1 );
 
    extra = mice_checkargs(nlhs,plhs,nrhs,prhs,ArgCheck);

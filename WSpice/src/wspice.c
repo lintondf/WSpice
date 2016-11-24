@@ -16,6 +16,7 @@
 //TODO get from mice.h mock
 typedef struct M_TENSOR_STRUCT       mxArray;
 
+void wsMessage(const char* str );
 void mice_fail( int cnt );
 void wsSetLibraryData( WolframLibraryData _libData );
 
@@ -258,22 +259,25 @@ DLLEXPORT int wspice_axisar(WolframLibraryData libData, mint Argc,
 	MTensor r;
 	RETURN_IF_MATHEMATICA_FALSE(libData->MTensor_new(MType_Real, 2, dims, &r) == LIBRARY_NO_ERROR, "Unable to allocate output matrix");
 
+	/* Scalar arguments are passed as pointers to the native type;
+	 * Array arguments are passed as MTensor (which is a pointer)
+	 */
 	int nrhs = 2;
 	const mxArray*  prhs[2+1];
 	prhs[0] = (const mxArray*)libData;  // in mice the first parameter was the function name string; we use it to make
 	                    // the WolframLibraryData pointer available
-	prhs[1] = (const mxArray*)libData->MTensor_getRealData(axis);
+	prhs[1] = (const mxArray*)axis; // (const mxArray*)libData->MTensor_getRealData(axis);
 	prhs[2] = (const mxArray*)&angle;
 	fprintf(debug, "axisar 1 %lg %lg %lg  %lg",
 			libData->MTensor_getRealData(axis)[0],
 			libData->MTensor_getRealData(axis)[1],
-			libData->MTensor_getRealData(axis)[1],
+			libData->MTensor_getRealData(axis)[2],
 			angle );
 	flushDebug(libData);
 
 	int nlhs = 1;
 	mxArray*  plhs[1];
-	plhs[0] = (mxArray*)libData->MTensor_getRealData(r);
+	plhs[0] = (mxArray*) r; /*(mxArray*)libData->MTensor_getRealData(r);*/
 #ifndef INCLUDE_BODY
 	cspice_axisar( nlhs, plhs, nrhs, prhs );
 #else

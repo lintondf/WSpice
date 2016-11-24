@@ -15,6 +15,7 @@ typedef char          mxChar;
 
 void mice_fail( long cnt );
 
+void wsMessage(const char* str );
 void wsSetLibraryData( WolframLibraryData _libData );
 
 void mexErrMsgTxt( const char* str );
@@ -185,11 +186,11 @@ mxArray * zzmice_CreateIntScalar( SpiceInt n);
 /*
 Variable's macros.
 */
-#define       S_INT_ARGV(x)         *(SpiceInt*)((WolframLibraryData) prhs[0])->MTensor_getIntegerData( (MTensor) prhs[x])
+#define       S_INT_ARGV(x)         *(SpiceInt*)prhs[x] /*((WolframLibraryData) prhs[0])->MTensor_getIntegerData( (MTensor) prhs[x])*/
 
 #define       A_INT_ARGV(x)          (SpiceInt*)((WolframLibraryData) prhs[0])->MTensor_getIntegerData((MTensor) prhs[x])
 
-#define       S_DBL_ARGV(x)         *(SpiceDouble*)((WolframLibraryData) prhs[0])->MTensor_getRealData((MTensor) prhs[x])
+#define       S_DBL_ARGV(x)         *(SpiceDouble*)prhs[x] /*((WolframLibraryData) prhs[0])->MTensor_getRealData((MTensor) prhs[x])*/
 
 #define       A_DBL_ARGV(x)          (SpiceDouble*)((WolframLibraryData) prhs[0])->MTensor_getRealData((MTensor) prhs[x])
 
