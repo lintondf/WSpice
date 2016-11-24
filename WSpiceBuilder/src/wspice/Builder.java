@@ -57,45 +57,8 @@ public class Builder {
 	StringBuffer packageDeclarations = new StringBuffer();
 
 	protected static PrintStream log = System.out;
-	protected int indent = 0;
-
-	protected String nextLine(ListIterator<String> it) {
-		if (it.hasNext()) {
-			String line = it.next().trim();
-			indent += line.length() - line.replace("{", "").length();
-			indent -= line.length() - line.replace("}", "").length();
-			line = line.replaceAll("          ", " ");
-			line = line.replaceAll("         ", " ");
-			line = line.replaceAll("        ", " ");
-			line = line.replaceAll("       ", " ");
-			line = line.replaceAll("      ", " ");
-			line = line.replaceAll("     ", " ");
-			line = line.replaceAll("    ", " ");
-			line = line.replaceAll("   ", " ");
-			return line.replaceAll("  ", " ");
-		}
-		return null;
-	}
 	
-	protected String priorNonBlank(ListIterator<String> it) {
-		while (it.hasPrevious()) {
-			String line = it.previous().trim();
-			if (line.isEmpty())
-				continue;
-			it.previous();
-			return nextLine(it);
-		}
-		return null;
-	}
-
-	protected String nextNonBlank(ListIterator<String> it) {
-		while (it.hasNext()) {
-			String line = nextLine(it);
-			if (!line.isEmpty())
-				return line;
-		}
-		return null;
-	}
+	protected Lexer lexer = new Lexer();
 
 	public class Variable {
 		public String name;
@@ -300,21 +263,21 @@ public class Builder {
 				type = "String";
 				isOutput = false;
 				isArray = false;
-				String[] tokens = splitNoEmpties(line,
+				String[] tokens = lexer.splitNoEmpties(line,
 						",| |\\(|\\)|\\[|\\]");
 				if (!tokens[1].equals("prhs"))
 					return false;
 				position = Integer.parseInt(tokens[2]);
 				name = tokens[3];
 			} else {
-				String[] tokens = splitNoEmpties(line, " ");
+				String[] tokens = lexer.splitNoEmpties(line, " ");
 				int i = 0;
 				name = tokens[i];
 				i++;
 				if (!tokens[i].equals("="))
 					return false;
 				i++;
-				tokens = splitNoEmpties(tokens[2], "\\(|\\)");
+				tokens = lexer.splitNoEmpties(tokens[2], "\\(|\\)");
 				i = 0;
 				if (tokens[i].startsWith("SpiceDouble")) {
 					i++;
@@ -365,7 +328,7 @@ public class Builder {
 				}
 				i++;
 				if (tokens[i].startsWith("prhs")) {
-					tokens = splitNoEmpties(tokens[i], "\\[|\\]");
+					tokens = lexer.splitNoEmpties(tokens[i], "\\[|\\]");
 					position = Integer.parseInt(tokens[1]);
 				} else {
 					position = Integer.parseInt(tokens[i]);
@@ -507,7 +470,7 @@ public class Builder {
 		boolean hasMemset = false;
 		Documentation doc = new Documentation();
 		doc.load(name);
-		String[] mfunc = splitNoEmpties( doc.mfunc.toString(), " |\\[|\\]|\\(|\\)");
+		String[] mfunc = lexer.splitNoEmpties( doc.mfunc.toString(), " |\\[|\\]|\\(|\\)");
 		if (!mfunc[0].equals("function"))
 			throw new Exception("Bad matlab function def in .m file");
 		Vector<String> outputNames = new Vector<String>();
@@ -530,20 +493,20 @@ public class Builder {
 		Vector<Parameter> input = new Vector<Parameter>();
 		HashMap<String, Variable> vars = new HashMap<String, Variable>();
 		HashMap<String, ArgCheck> args = new HashMap<String, ArgCheck>();
-		String line = nextLine(it);
+		String line = lexer.nextLine(it);
 		if (!line.startsWith("{"))
 			return false;
 		while (it.hasNext()) {
-			line = nextLine(it);
+			line = lexer.nextLine(it);
 			if (line.startsWith(EXTRA_DECL))
 				break;
 			if (line.startsWith(CAN_REF))
 				break;
 			if (line.startsWith("/*")) {
 				while (it.hasNext()) {
-					line = nextLine(it);
+					line = lexer.nextLine(it);
 					if (line.startsWith("*/")) {
-						line = nextNonBlank(it);
+						line = lexer.nextNonBlank(it);
 						break;
 					}
 				}
@@ -562,16 +525,16 @@ public class Builder {
 			if (line.startsWith("/*")) {
 				inChecks = true;
 				while (!line.endsWith("*/")) {
-					line = nextLine(it);
+					line = lexer.nextLine(it);
 				}
-				line = nextNonBlank(it);
+				line = lexer.nextNonBlank(it);
 			} else if (line.startsWith(ARGCHECK_TOKEN)) {
 				hasArgCheck = true;
 				inChecks = true;
 				while (it.hasNext()) {
-					line = nextLine(it);
+					line = lexer.nextLine(it);
 					if (line.startsWith("};")) {
-						line = nextNonBlank(it);
+						line = lexer.nextNonBlank(it);
 						break;
 					} else if (line.endsWith(",")) {
 						// log.println("  -" + line );
@@ -583,19 +546,19 @@ public class Builder {
 			} else if (line.startsWith(MEMSET_TOKEN)) {
 				hasMemset = true;
 				inChecks = true;
-				line = nextNonBlank(it);
+				line = lexer.nextNonBlank(it);
 			} else if (line.startsWith(CHECK_EXTRA_TOKEN)) {
 				hasExtra = true;
 				inChecks = true;
-				line = nextNonBlank(it);
+				line = lexer.nextNonBlank(it);
 			} else if (line.startsWith(EXTRA_DECL)) {
 				hasExtra = true;
 				inChecks = true;
-				line = nextNonBlank(it);
+				line = lexer.nextNonBlank(it);
 			} else if (line.startsWith(CAN_REF)) {
 				hasCheckNum = true;
 				inChecks = true;
-				line = nextNonBlank(it);
+				line = lexer.nextNonBlank(it);
 				// } else {
 				// log.println("? " + line);
 				// line = nextNonBlank( it );
@@ -621,13 +584,13 @@ public class Builder {
 				if (target != null) log.println("  @" + line);
 				if (line.startsWith("/*")) {
 					while(!line.endsWith("*/")) {
-						line = nextNonBlank(it);
+						line = lexer.nextNonBlank(it);
 					}
-					line = nextNonBlank(it);
+					line = lexer.nextNonBlank(it);
 					continue;
 				}
 				if (line.indexOf("mxGetString") >= 0) {
-					String[] tokens = splitNoEmpties(line, "\\(|\\)|\\[|\\]|\\,| ");
+					String[] tokens = lexer.splitNoEmpties(line, "\\(|\\)|\\[|\\]|\\,| ");
 					if (tokens.length >= 4 && tokens[0].equals("mxGetString") && tokens[1].equals("prhs")) {
 						Parameter param = new Parameter();
 						try {
@@ -643,7 +606,7 @@ public class Builder {
 						System.err.println("  @??? " + line );
 					}
 				} else if (line.indexOf("mxGetNumberOfElements") == -1) {
-					String[] tokens = splitNoEmpties(line, " ");
+					String[] tokens = lexer.splitNoEmpties(line, " ");
 					if (args.containsKey(tokens[0])) {
 						Parameter param = new Parameter();
 						if (!param.parse(args, vars, line)) {
@@ -657,7 +620,7 @@ public class Builder {
 						}
 					}
 				}
-				line = nextNonBlank(it);
+				line = lexer.nextNonBlank(it);
 			}
 		}
 		// log.println("  ." + line);
@@ -668,24 +631,24 @@ public class Builder {
 		// scan remaining C code body extracting c function invocation and outputs
 		
 		while (it.hasNext()) {
-			line = nextLine(it);
-			if (line == null || indent == 0)
+			line = lexer.nextLine(it);
+			if (line == null || lexer.indent == 0)
 				break;
 			// skip comment blocks
 			if (line.startsWith("/*")) {
 				while(!line.endsWith("*/")) {
-					line = nextNonBlank(it);
+					line = lexer.nextNonBlank(it);
 				}
-				line = nextNonBlank(it);
+				line = lexer.nextNonBlank(it);
 			}
 			// capture invocation
 			if (call.length() == 0 && line.startsWith(name + "_c(")) {
 				call.append(line);
 				while (!line.endsWith(");")) {
-					line = nextLine(it);
+					line = lexer.nextLine(it);
 					call.append(line);
 				}
-				line = nextNonBlank(it);
+				line = lexer.nextNonBlank(it);
 			}
 //			if (call != null) {
 //				if (line.indexOf("mxSetField") >= 0) {
@@ -856,7 +819,7 @@ public class Builder {
 			Vector<String> sizearray, Vector<Parameter> output, HashMap<String, Variable> vars,
 			HashMap<String, ArgCheck> args) throws Exception {
 		log.println("parseResult: " + line);
-		String[] tokens = splitNoEmpties( line, " |,|\\[|\\]|\\(|\\)" );
+		String[] tokens = lexer.splitNoEmpties( line, " |,|\\[|\\]|\\(|\\)" );
 		if (tokens[0].equals("plhs") && tokens[2].equals("=")) {
 			int position = Integer.parseInt(tokens[1]);
 			String name = outputNames.get(position);
@@ -867,17 +830,17 @@ public class Builder {
 				p.allocation = new Vector<String>();
 				p.allocation.add( tokens[4] );
 				p.allocation.add( tokens[5] );
-				String l1 = nextNonBlank(it);
-				String l2 = nextNonBlank(it);
+				String l1 = lexer.nextNonBlank(it);
+				String l2 = lexer.nextNonBlank(it);
 				if (l1.indexOf("A_DBL_RET_ARGV") >= 0 && l2.startsWith("MOVED")) {
-					tokens = splitNoEmpties( l1, " |=");
+					tokens = lexer.splitNoEmpties( l1, " |=");
 					String pointerName = tokens[0];
 					l2 = l2.replaceAll(pointerName, "*");
 					p.copy = l2;
 					return p;
 				} else {
-					priorNonBlank(it);
-					priorNonBlank(it);
+					lexer.priorNonBlank(it);
+					lexer.priorNonBlank(it);
 				}
 				return null;
 			} else {
@@ -885,23 +848,13 @@ public class Builder {
 				throw new Exception("Unrecognized idiom");
 			}
 		} else {
-			priorNonBlank(it);
+			lexer.priorNonBlank(it);
 			return null;
 		}
 	}
 
-	private String[] splitNoEmpties(String line, String pattern) {
-		String[] allTokens = line.split(pattern);
-		Vector<String> tokens = new Vector<String>();
-		for (String token : allTokens) {
-			if (!token.isEmpty())
-				tokens.add(token);
-		}
-		return tokens.toArray( new String[tokens.size()] );
-	}
-
 	private Parameter parseField(String line) {
-		String[] tokens = splitNoEmpties(line, ",| |\"|\\(|\\)");
+		String[] tokens = lexer.splitNoEmpties(line, ",| |\"|\\(|\\)");
 		String name = tokens[3];
 		String type = null;
 		switch (tokens[4]) {
@@ -987,7 +940,7 @@ public class Builder {
 			List<String> lines = FileUtils.readLines(txt, "UTF-8");
 			ListIterator<String> it = lines.listIterator();
 			while (it.hasNext()) {
-				String line = nextNonBlank(it);
+				String line = lexer.nextNonBlank(it);
 				if (line == null || line.isEmpty())
 					break;
 				String[] tokens = line.split("-|\t");
@@ -1229,13 +1182,13 @@ public class Builder {
 			List<String> lines = FileUtils.readLines(mice, "UTF-8");
 			ListIterator<String> it = lines.listIterator();
 			while (it.hasNext()) {
-				String line = nextLine(it);
+				String line = lexer.nextLine(it);
 				if (line.startsWith(FUNCTION_TOKEN1)) { // cspice_
 					name = line.substring(FUNCTION_TOKEN1.length());
 					name = name.substring(0, name.indexOf('('));
 					// log.println( name );
 					while (!line.endsWith(")")) {
-						line = nextLine(it);
+						line = lexer.nextLine(it);
 					}
 					// always exclude housekeeping
 					if (name.equals("mice") || name.equals("cleanup"))
@@ -1253,7 +1206,7 @@ public class Builder {
 				    name = line.substring(FUNCTION_TOKEN2.length());
 					name = name.substring(0, name.indexOf('('));
 					while (!line.endsWith(")")) {
-						line = nextLine(it);
+						line = lexer.nextLine(it);
 					}
 					// always exclude housekeeping
 					if (name.equals("mice") || name.equals("cleanup"))
@@ -1355,19 +1308,19 @@ public class Builder {
 			List<String> lines = FileUtils.readLines(mice, "UTF-8");
 			ListIterator<String> it = lines.listIterator();
 			while (it.hasNext()) {
-				String line = nextLine(it);
+				String line = lexer.nextLine(it);
 				//log.println(line.length() + " [" + line + "]");
 				if (line.equals("A"))
 					break;
 			}
 			while (it.hasNext()) {
-				String line = nextLine(it);
+				String line = lexer.nextLine(it);
 				if (line.endsWith("\tTop"))
 					continue;
 				if (line.indexOf("=") == -1) {
 					continue;
 				}
-				String[] tokens = splitNoEmpties(line, ":| |\\[|\\]");
+				String[] tokens = lexer.splitNoEmpties(line, ":| |\\[|\\]");
 				if (tokens.length < 3) {
 					for (String token : tokens) {
 						log.print("<"+ token + ">");
@@ -1423,9 +1376,13 @@ public class Builder {
 	public static void main(String[] args) {
 		try {
 			log = new PrintStream( new FileOutputStream( new File("log.txt") ) );
-			Builder builder = new Builder();
-			builder.scanCallSequenceIndex("mice_index.txt");
-			builder.translate();
+//			Builder builder = new Builder();
+//			builder.scanCallSequenceIndex("mice_index.txt");
+//			builder.translate();
+			
+			TestTranslator translator = new TestTranslator("C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice/rot_matlab.m");
+			translator.translate();
+			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
