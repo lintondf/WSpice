@@ -1,8 +1,10 @@
 package wspice;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Vector;
 
 import org.apache.commons.io.FileUtils;
@@ -11,42 +13,280 @@ public class TestTranslator {
 	
 	protected File testSource;
 	protected List<String> reduced;
+	protected List<Integer> lineNumbers;
 	ListIterator<String> rit;
 	protected Lexer lexer = new Lexer();
-
+	
+	protected String line;
+	
 	TestTranslator( String path ) {
 		testSource = new File(path);
 	}
 	
 	protected enum ParseState {
 		HEADER,
-		TRAILER,
+		PREAMBLE,
+		TEST_CASE,
+		TEST_SUBCASES,
 		ERROR
 	};
 	protected ParseState parseState = ParseState.HEADER;
-	protected String testName;
 	
-	protected ParseState parseHeader(String line) {
+	public static class Module {
+		Module(String name) {
+			this.name = name;
+			preamble = new Vector<String>();
+			cases = new Vector<Case>();
+		}
+		
+		String name;
+		
+		Vector<String>  preamble;
+		String   disp;
+		String   topen;
+		
+		public class Subcase {
+			Subcase() {
+				this.setup = new Vector<String>();
+				this.steps = new Vector<String>();
+				this.checks = new Vector<String>();
+			}
+			Vector<String>  setup;
+			Vector<String>  steps;
+			String catcher;
+			Vector<String>  checks;
+			
+			public String toString() {
+				StringBuffer sb = new StringBuffer();
+				sb.append("   setup\n");
+				for (String s : setup ) {
+					sb.append("     ");
+					sb.append(s);
+					sb.append('\n');						
+				}
+				if (catcher != null) {
+					sb.append("   try\n");
+					for (String s : steps) {
+						sb.append("     ");
+						sb.append(s);
+						sb.append('\n');						
+					}
+					sb.append("   catch\n");
+					sb.append("     ");
+					sb.append(catcher);
+					sb.append('\n');
+				} else {
+					sb.append("   inline\n");
+					for (String s : steps) {
+						sb.append("     ");
+						sb.append(s);
+						sb.append('\n');						
+					}					
+				}
+				sb.append("   checks\n");
+				for (String s : checks) {
+					sb.append("     ");
+					sb.append(s);
+					sb.append('\n');						
+				}
+				return sb.toString();
+			}
+		}
+		
+		public class Case {
+			public Case(String title) {
+				this.title = title;
+				this.subcases = new Vector<Subcase>();
+			}
+			String title;
+			Vector<Subcase> subcases;
+			
+			public String toString() {
+				StringBuffer sb = new StringBuffer();
+				sb.append("  Case: ");
+				sb.append( title );	
+				sb.append('\n');
+				for (Subcase s : subcases ) {
+					sb.append( s );
+				}
+				return sb.toString();
+			}
+		}
+		
+		Vector<Case> cases;
+		
+		public String toString() {
+			StringBuffer sb = new StringBuffer();
+			sb.append( name ); sb.append('\n');
+			for (String a : preamble) {
+				sb.append("  Preamble: "); 
+				sb.append( a );
+				sb.append('\n');
+			}
+			for (Case tcase : cases) {
+				sb.append( tcase );
+			}
+			return sb.toString();
+		}
+	}
+	
+	protected Module module;
+	
+	protected ParseState parseHeader() {
 		String[] tokens = lexer.splitNoEmpties(line, " ");
 		if (tokens.length != 2 || !tokens[0].equals("function"))
 			return ParseState.ERROR;
-		testName = tokens[1];
-		return ParseState.TRAILER;
+		module = new Module( tokens[1] );
+		line = lexer.nextLine(rit);
+		return ParseState.PREAMBLE;
+	}
+	
+	protected ParseState parsePreamble() {
+		while (line.indexOf('=') >= 0) {
+			module.preamble.add( line );
+			line = lexer.nextLine(rit);
+		}
+		if (line.startsWith("disp(")) {
+			module.disp = line;
+			line = lexer.nextLine(rit);			
+		}
+		if (line.startsWith("tutils_topen(")) {
+			module.topen = line;
+			line = lexer.nextLine(rit);
+		}
+		return ParseState.TEST_CASE;
+	}
+	
+	protected ParseState parseTestCase() {
+		if (line.startsWith("tutils_tcase")) {
+			Module.Case testCase = module.new Case( line );
+			module.cases.add( testCase );
+			line = lexer.nextLine(rit);
+			return ParseState.TEST_SUBCASES;			
+		}
+		return ParseState.ERROR;
+	}
+	
+	protected ParseState parseSubcases() {
+		Module.Subcase subcase = module.new Subcase();
+		while (line.indexOf('=') >= 0) {
+			if (line.indexOf("cspice_") >= 0 || line.indexOf("mice_") >= 0) {
+				break;
+			} else {
+				subcase.setup.add( line );
+				line = lexer.nextLine(rit);
+			}
+		}
+		if (line.equals("try")) {
+			while (line.equals("try")) {
+				line = lexer.nextLine(rit);
+				while (! line.equals("catch")) {
+					subcase.steps.add(line);
+					line = lexer.nextLine(rit);
+				}
+				line = lexer.nextLine(rit);
+				while (! line.equals("end")) {
+					subcase.catcher = line;
+					line = lexer.nextLine(rit);
+				}
+				line = lexer.nextLine(rit);
+				while (line != null) {
+					if ( line.startsWith("tutils_tcase"))
+						break;
+					if ( line.equals("try"))
+						break;
+					subcase.checks.add(line);
+					if (rit.hasNext()) {
+						line = lexer.nextLine(rit);
+					} else {
+						line = null; 
+					}
+				}
+				module.cases.lastElement().subcases.add(subcase);
+				if (line.equals("try")) {
+					subcase = module.new Subcase();
+				}
+			}
+			return ParseState.TEST_CASE;
+		} else { // naked invocation
+//			System.out.println(rit.previousIndex());
+//			System.out.print( lineNumbers.get( rit.previousIndex() ));
+//			System.out.print(" : ");
+//			System.out.println(line);
+			while (rit.hasNext()) {
+				subcase.steps.add(line);
+				line = lexer.nextLine(rit);
+				boolean emptySubcase = false;
+				while (line != null && ! line.startsWith("tutils_tcase")) {
+					if (line.indexOf("cspice_") >= 0 || line.indexOf("mice_") >= 0) {
+						module.cases.lastElement().subcases.add(subcase);
+						subcase = module.new Subcase();
+						emptySubcase = true;
+						break;
+					}
+					subcase.checks.add(line);
+					if (rit.hasNext()) {
+						line = lexer.nextLine(rit);
+					} else {
+						line = null; 
+					}
+				}
+				if (!emptySubcase ) {
+					module.cases.lastElement().subcases.add(subcase);
+				}
+				if (line != null && line.startsWith("tutils_tcase"))
+					break;
+			}
+			return ParseState.TEST_CASE;
+		}
+	}
+	
+	protected void cleanup() {
+		for (Module.Case testCase : module.cases) {
+			int n = testCase.subcases.size();
+			for (int i = 0; i < n-1; i++) {
+				Module.Subcase thisSubcase = testCase.subcases.get(i);
+				Module.Subcase nextSubcase = testCase.subcases.get(i+1);
+				if (thisSubcase.checks != null && !thisSubcase.checks.isEmpty() ) {
+					String check = thisSubcase.checks.lastElement();
+					while (! check.startsWith("MATLAB_check_error")) {
+						thisSubcase.checks.remove(check);
+						nextSubcase.setup.insertElementAt(check, 0);
+						check = thisSubcase.checks.lastElement();
+					}
+				}
+			}
+		}
 	}
 	
 	public boolean translate() {
 		reduce();
 		rit = reduced.listIterator();
+		line = lexer.nextLine(rit);
 		while (rit.hasNext()) {
-			String line = lexer.nextLine(rit);
 			switch (parseState) {
 			case HEADER:
-				parseState = parseHeader( line );
+				parseState = parseHeader();
 				break;
-			default:
+			case PREAMBLE:
+				parseState = parsePreamble();
+				break;
+			case TEST_CASE:
+				parseState = parseTestCase();
+				break;
+			case TEST_SUBCASES:
+				parseState = parseSubcases();
+				break;
+			case ERROR:
+				System.out.println( module );
+				System.err.print( lineNumbers.get( rit.previousIndex() ));
+				System.err.print(" : ");
+				System.err.println(line);
 				return false;
 			}
 		}
+		cleanup();
+		System.out.println(module);
 		return true;
 	}
 	
@@ -55,8 +295,10 @@ public class TestTranslator {
 			List<String> lines = FileUtils.readLines(testSource, "UTF-8");
 			ListIterator<String> it = lines.listIterator();
 		    reduced = new Vector<String>();
+		    lineNumbers = new Vector<Integer>();
 			while (it.hasNext()) {
-				String line = lexer.nextLine(it);
+				int ln = it.nextIndex();
+				line = lexer.nextLine(it);
 				if (line == null)
 					break;
 				if (line.isEmpty())
@@ -69,6 +311,11 @@ public class TestTranslator {
 					line = lexer.nextLine(it);
 				}
 				fullLine.append( line );
+				line = fullLine.toString();
+				line = line.replaceAll("cspice_halfpi", "0.5*pi");
+
+				reduced.add( line );
+				lineNumbers.add(ln);
 			}
 		} catch (Exception x) {
 			x.printStackTrace();

@@ -19,7 +19,9 @@ public class Lexer {
 			line = line.replaceAll("     ", " ");
 			line = line.replaceAll("    ", " ");
 			line = line.replaceAll("   ", " ");
-			return line.replaceAll("  ", " ");
+			line = line.replaceAll("  ", " ");
+			//System.out.println(line);
+			return line;
 		}
 		return null;
 	}
