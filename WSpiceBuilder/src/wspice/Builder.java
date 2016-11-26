@@ -3,6 +3,7 @@ package wspice;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -1380,8 +1381,62 @@ public class Builder {
 //			builder.scanCallSequenceIndex("mice_index.txt");
 //			builder.translate();
 			
-			TestTranslator translator = new TestTranslator("C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice/rot_matlab.m");
-			translator.translate();
+			File dir = new File("C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice");
+			File[] list = dir.listFiles(new FilenameFilter() {
+			    @Override
+			    public boolean accept(File dir, String name) {
+			        return name.endsWith("_matlab.m");
+			    }
+			});	
+			
+			Vector<String> forExcludes = new Vector<String>();
+			forExcludes.add("ckcov_matlab.m");
+			forExcludes.add("ck_matlab.m");
+			forExcludes.add("cnst_matlab.m");
+			forExcludes.add("daf_matlab.m");
+			forExcludes.add("dvops_matlab.m");
+			forExcludes.add("dvsep_matlab.m");
+			forExcludes.add("edln_matlab.m");
+			forExcludes.add("ek01_matlab.m");
+			forExcludes.add("fovray_matlab.m");
+			forExcludes.add("fovtrg_matlab.m");
+			forExcludes.add("gfdist_matlab.m");
+			forExcludes.add("gfilum_matlab.m");
+			forExcludes.add("gfoclt_matlab.m");
+			forExcludes.add("gfpa_matlab.m");
+			forExcludes.add("gfposc_matlab.m");
+			forExcludes.add("gfrfov_matlab.m");
+			forExcludes.add("gfrr_matlab.m");
+			forExcludes.add("gfsep_matlab.m");
+			forExcludes.add("gfsntc_matlab.m");
+			forExcludes.add("gfsubc_matlab.m");
+			forExcludes.add("gftfov_matlab.m");
+			forExcludes.add("inry_matlab.m");
+			forExcludes.add("keep_matlab.m");
+			forExcludes.add("phaseq_matlab.m");
+			forExcludes.add("pln_matlab.m");
+			forExcludes.add("pool_matlab.m");
+			forExcludes.add("prjp_matlab.m");
+			forExcludes.add("pxfrm2_matlab.m");
+			forExcludes.add("spkcov_matlab.m");
+			forExcludes.add("spkcov_matlab.m");
+			forExcludes.add("spkcpv_matlab.m");
+			forExcludes.add("spk_matlab.m");
+			forExcludes.add("wind_matlab.m");
+			forExcludes.add("xfmsta_matlab.m");
+ 
+			for (File f : list) {
+				System.out.println(f);
+				// exclude master test runner
+				if (f.getName().equals("tspice_matlab.m"))
+					continue;
+				// exclude tests with nested for statement; hand translate these
+				if ( forExcludes.contains( f.getName() ) )
+					continue;
+				TestTranslator translator = new TestTranslator(f.getAbsolutePath());
+				if (! translator.translate())
+					break;
+			}
 			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();

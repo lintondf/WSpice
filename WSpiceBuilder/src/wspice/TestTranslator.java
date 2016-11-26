@@ -158,6 +158,10 @@ public class TestTranslator {
 	}
 	
 	protected ParseState parseTestCase() {
+		while (!line.startsWith("tutils_tcase")) {
+			module.preamble.add( line );
+			line = lexer.nextLine(rit);
+		}
 		if (line.startsWith("tutils_tcase")) {
 			Module.Case testCase = module.new Case( line );
 			module.cases.add( testCase );
@@ -165,6 +169,16 @@ public class TestTranslator {
 			return ParseState.TEST_SUBCASES;			
 		}
 		return ParseState.ERROR;
+	}
+	
+	protected boolean endOfCheckSequence() {
+		if (line == null)
+			return true;
+		if (line.startsWith("tutils_tcase"))
+			return true;
+		if (line.startsWith("for"))
+			return true;
+		return false;
 	}
 	
 	protected ParseState parseSubcases() {
@@ -178,7 +192,7 @@ public class TestTranslator {
 			}
 		}
 		if (line.equals("try")) {
-			while (line.equals("try")) {
+			while (line != null && line.equals("try")) {
 				line = lexer.nextLine(rit);
 				while (! line.equals("catch")) {
 					subcase.steps.add(line);
@@ -191,7 +205,7 @@ public class TestTranslator {
 				}
 				line = lexer.nextLine(rit);
 				while (line != null) {
-					if ( line.startsWith("tutils_tcase"))
+					if ( endOfCheckSequence() )
 						break;
 					if ( line.equals("try"))
 						break;
@@ -203,7 +217,7 @@ public class TestTranslator {
 					}
 				}
 				module.cases.lastElement().subcases.add(subcase);
-				if (line.equals("try")) {
+				if (line != null && line.equals("try")) {
 					subcase = module.new Subcase();
 				}
 			}
@@ -217,7 +231,7 @@ public class TestTranslator {
 				subcase.steps.add(line);
 				line = lexer.nextLine(rit);
 				boolean emptySubcase = false;
-				while (line != null && ! line.startsWith("tutils_tcase")) {
+				while (line != null && ! endOfCheckSequence() ) {
 					if (line.indexOf("cspice_") >= 0 || line.indexOf("mice_") >= 0) {
 						module.cases.lastElement().subcases.add(subcase);
 						subcase = module.new Subcase();
@@ -234,7 +248,7 @@ public class TestTranslator {
 				if (!emptySubcase ) {
 					module.cases.lastElement().subcases.add(subcase);
 				}
-				if (line != null && line.startsWith("tutils_tcase"))
+				if (endOfCheckSequence())
 					break;
 			}
 			return ParseState.TEST_CASE;
@@ -252,6 +266,8 @@ public class TestTranslator {
 					while (! check.startsWith("MATLAB_check_error")) {
 						thisSubcase.checks.remove(check);
 						nextSubcase.setup.insertElementAt(check, 0);
+						if (thisSubcase.checks.isEmpty())
+							break;
 						check = thisSubcase.checks.lastElement();
 					}
 				}
@@ -263,18 +279,23 @@ public class TestTranslator {
 		reduce();
 		rit = reduced.listIterator();
 		line = lexer.nextLine(rit);
+		ParseState lastState = parseState;
 		while (rit.hasNext()) {
 			switch (parseState) {
 			case HEADER:
+				lastState = parseState;
 				parseState = parseHeader();
 				break;
 			case PREAMBLE:
+				lastState = parseState;
 				parseState = parsePreamble();
 				break;
 			case TEST_CASE:
+				lastState = parseState;
 				parseState = parseTestCase();
 				break;
 			case TEST_SUBCASES:
+				lastState = parseState;
 				parseState = parseSubcases();
 				break;
 			case ERROR:
@@ -282,6 +303,7 @@ public class TestTranslator {
 				System.err.print( lineNumbers.get( rit.previousIndex() ));
 				System.err.print(" : ");
 				System.err.println(line);
+				System.err.println( lastState.toString() );
 				return false;
 			}
 		}
@@ -314,6 +336,9 @@ public class TestTranslator {
 				line = fullLine.toString();
 				line = line.replaceAll("cspice_halfpi", "0.5*pi");
 
+				if (line.startsWith("for")) {
+					System.out.println("FOR " + ln + " : " + line);
+				}
 				reduced.add( line );
 				lineNumbers.add(ln);
 			}
