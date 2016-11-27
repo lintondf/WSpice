@@ -1381,6 +1381,11 @@ public class Builder {
 //			builder.scanCallSequenceIndex("mice_index.txt");
 //			builder.translate();
 			
+			{
+			TestTranslator translator = new TestTranslator("C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice/ckcov_matlab.m");
+			if (translator.translate())
+				return;
+			}
 			File dir = new File("C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice");
 			File[] list = dir.listFiles(new FilenameFilter() {
 			    @Override

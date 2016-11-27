@@ -19,6 +19,26 @@ public class TestTranslator {
 	
 	protected String line;
 	
+	protected String nextLine() {
+		line = lexer.nextLine(rit);
+		if (line == null) return null;
+		if (line.startsWith("for") || line.startsWith("try") || line.startsWith("while")) {
+			module.blockLevel++;
+		} else if (line.startsWith("end")) {
+			module.blockLevel--;
+		}
+		System.out.print( lineNumbers.get( rit.previousIndex() ));
+		System.out.print(",");
+		if (module != null)
+			System.out.print(module.blockLevel);
+		System.out.print(",");
+		System.out.print( parseState );
+		System.out.print(" : ");
+		System.out.println(line);
+		
+		return line;
+	}
+	
 	TestTranslator( String path ) {
 		testSource = new File(path);
 	}
@@ -37,9 +57,11 @@ public class TestTranslator {
 			this.name = name;
 			preamble = new Vector<String>();
 			cases = new Vector<Case>();
+			blockLevel = 0;
 		}
 		
 		String name;
+		int  blockLevel;
 		
 		Vector<String>  preamble;
 		String   disp;
@@ -96,9 +118,11 @@ public class TestTranslator {
 		public class Case {
 			public Case(String title) {
 				this.title = title;
+				this.forStatement = new Vector<String>();
 				this.subcases = new Vector<Subcase>();
 			}
 			String title;
+			Vector<String>  forStatement;
 			Vector<Subcase> subcases;
 			
 			public String toString() {
@@ -106,6 +130,12 @@ public class TestTranslator {
 				sb.append("  Case: ");
 				sb.append( title );	
 				sb.append('\n');
+				sb.append("   for statements:\n");
+				for (String s : forStatement ) {
+					sb.append("      ");
+					sb.append(s);
+					sb.append('\n');					
+				}
 				for (Subcase s : subcases ) {
 					sb.append( s );
 				}
@@ -137,35 +167,51 @@ public class TestTranslator {
 		if (tokens.length != 2 || !tokens[0].equals("function"))
 			return ParseState.ERROR;
 		module = new Module( tokens[1] );
-		line = lexer.nextLine(rit);
+		line = nextLine();
 		return ParseState.PREAMBLE;
 	}
 	
 	protected ParseState parsePreamble() {
 		while (line.indexOf('=') >= 0) {
 			module.preamble.add( line );
-			line = lexer.nextLine(rit);
+			line = nextLine();
 		}
 		if (line.startsWith("disp(")) {
 			module.disp = line;
-			line = lexer.nextLine(rit);			
+			line = nextLine();			
 		}
 		if (line.startsWith("tutils_topen(")) {
 			module.topen = line;
-			line = lexer.nextLine(rit);
+			line = nextLine();
 		}
 		return ParseState.TEST_CASE;
 	}
 	
 	protected ParseState parseTestCase() {
-		while (!line.startsWith("tutils_tcase")) {
+		System.out.println(line);
+		while (! (line.startsWith("tutils_tcase") || line.startsWith("for")) ) {
 			module.preamble.add( line );
-			line = lexer.nextLine(rit);
+			line = nextLine();
+			if (line == null) return ParseState.ERROR;
 		}
-		if (line.startsWith("tutils_tcase")) {
+		if (line.startsWith("for")) {
+			System.out.println(line);
+			Vector<String> forStatement = new Vector<String>();
+			forStatement.add(line);
+			line = nextLine();
+			while (line != null && ! line.startsWith("tutils_tcase")) {
+				forStatement.add(line);
+				line = nextLine();				
+			}
+			Module.Case testCase = module.new Case( line );
+			testCase.forStatement = forStatement;
+			module.cases.add( testCase );
+			line = nextLine();
+			return ParseState.TEST_SUBCASES;			
+		} else if (line.startsWith("tutils_tcase")) {
 			Module.Case testCase = module.new Case( line );
 			module.cases.add( testCase );
-			line = lexer.nextLine(rit);
+			line = nextLine();
 			return ParseState.TEST_SUBCASES;			
 		}
 		return ParseState.ERROR;
@@ -176,8 +222,14 @@ public class TestTranslator {
 			return true;
 		if (line.startsWith("tutils_tcase"))
 			return true;
-		if (line.startsWith("for"))
-			return true;
+		if (line.startsWith("for")) {
+//			module.cases.lastElement().forLevel++;
+			return module.blockLevel == 1;
+		}
+		if (line.startsWith("end")) {
+//			module.cases.lastElement().forLevel--;
+			return module.blockLevel == 0;
+		}
 		return false;
 	}
 	
@@ -188,22 +240,25 @@ public class TestTranslator {
 				break;
 			} else {
 				subcase.setup.add( line );
-				line = lexer.nextLine(rit);
+				line = nextLine();
 			}
 		}
-		if (line.equals("try")) {
+		if (line.startsWith("for")) {
+			System.out.println(line);
+			return ParseState.ERROR;
+		} else if (line.equals("try")) {
 			while (line != null && line.equals("try")) {
-				line = lexer.nextLine(rit);
+				line = nextLine();
 				while (! line.equals("catch")) {
 					subcase.steps.add(line);
-					line = lexer.nextLine(rit);
+					line = nextLine();
 				}
-				line = lexer.nextLine(rit);
+				line = nextLine();
 				while (! line.equals("end")) {
 					subcase.catcher = line;
-					line = lexer.nextLine(rit);
+					line = nextLine();
 				}
-				line = lexer.nextLine(rit);
+				line = nextLine();
 				while (line != null) {
 					if ( endOfCheckSequence() )
 						break;
@@ -211,7 +266,7 @@ public class TestTranslator {
 						break;
 					subcase.checks.add(line);
 					if (rit.hasNext()) {
-						line = lexer.nextLine(rit);
+						line = nextLine();
 					} else {
 						line = null; 
 					}
@@ -229,7 +284,7 @@ public class TestTranslator {
 //			System.out.println(line);
 			while (rit.hasNext()) {
 				subcase.steps.add(line);
-				line = lexer.nextLine(rit);
+				line = nextLine();
 				boolean emptySubcase = false;
 				while (line != null && ! endOfCheckSequence() ) {
 					if (line.indexOf("cspice_") >= 0 || line.indexOf("mice_") >= 0) {
@@ -240,7 +295,7 @@ public class TestTranslator {
 					}
 					subcase.checks.add(line);
 					if (rit.hasNext()) {
-						line = lexer.nextLine(rit);
+						line = nextLine();
 					} else {
 						line = null; 
 					}
@@ -278,9 +333,9 @@ public class TestTranslator {
 	public boolean translate() {
 		reduce();
 		rit = reduced.listIterator();
-		line = lexer.nextLine(rit);
+		line = nextLine();
 		ParseState lastState = parseState;
-		while (rit.hasNext()) {
+		while (line != null) {
 			switch (parseState) {
 			case HEADER:
 				lastState = parseState;
@@ -297,6 +352,9 @@ public class TestTranslator {
 			case TEST_SUBCASES:
 				lastState = parseState;
 				parseState = parseSubcases();
+				if (line != null && line.equals("end")) {
+					line = nextLine();
+				}
 				break;
 			case ERROR:
 				System.out.println( module );
