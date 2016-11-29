@@ -1381,11 +1381,12 @@ public class Builder {
 //			builder.scanCallSequenceIndex("mice_index.txt");
 //			builder.translate();
 			
-			{
-			TestTranslator translator = new TestTranslator("C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice/ckcov_matlab.m");
-			if (translator.translate())
-				return;
-			}
+//			{
+//			TestTranslator translator = new TestTranslator(
+//					"C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice/xfmsta_matlab.m");
+//			if (translator.translate())
+//				return;
+//			}
 			File dir = new File("C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice");
 			File[] list = dir.listFiles(new FilenameFilter() {
 			    @Override
@@ -1395,41 +1396,41 @@ public class Builder {
 			});	
 			
 			Vector<String> forExcludes = new Vector<String>();
-			forExcludes.add("ckcov_matlab.m");
-			forExcludes.add("ck_matlab.m");
-			forExcludes.add("cnst_matlab.m");
-			forExcludes.add("daf_matlab.m");
-			forExcludes.add("dvops_matlab.m");
-			forExcludes.add("dvsep_matlab.m");
-			forExcludes.add("edln_matlab.m");
-			forExcludes.add("ek01_matlab.m");
-			forExcludes.add("fovray_matlab.m");
-			forExcludes.add("fovtrg_matlab.m");
-			forExcludes.add("gfdist_matlab.m");
-			forExcludes.add("gfilum_matlab.m");
-			forExcludes.add("gfoclt_matlab.m");
-			forExcludes.add("gfpa_matlab.m");
-			forExcludes.add("gfposc_matlab.m");
-			forExcludes.add("gfrfov_matlab.m");
-			forExcludes.add("gfrr_matlab.m");
-			forExcludes.add("gfsep_matlab.m");
-			forExcludes.add("gfsntc_matlab.m");
-			forExcludes.add("gfsubc_matlab.m");
-			forExcludes.add("gftfov_matlab.m");
-			forExcludes.add("inry_matlab.m");
-			forExcludes.add("keep_matlab.m");
-			forExcludes.add("phaseq_matlab.m");
-			forExcludes.add("pln_matlab.m");
-			forExcludes.add("pool_matlab.m");
-			forExcludes.add("prjp_matlab.m");
-			forExcludes.add("pxfrm2_matlab.m");
-			forExcludes.add("spkcov_matlab.m");
-			forExcludes.add("spkcov_matlab.m");
-			forExcludes.add("spkcpv_matlab.m");
-			forExcludes.add("spk_matlab.m");
-			forExcludes.add("wind_matlab.m");
-			forExcludes.add("xfmsta_matlab.m");
+			//forExcludes.add("ckcov_matlab.m");
+			//forExcludes.add("ck_matlab.m");
+			//forExcludes.add("cnst_matlab.m");
+			//forExcludes.add("daf_matlab.m");
+			//forExcludes.add("dvops_matlab.m"); // three cases inside one for
+			//forExcludes.add("dvsep_matlab.m");
+			//forExcludes.add("edln_matlab.m"); // if else end in setup
+			//forExcludes.add("ek01_matlab.m");
+			//forExcludes.add("fovray_matlab.m");
+			//forExcludes.add("fovtrg_matlab.m");
+			//forExcludes.add("gfdist_matlab.m");
+			//forExcludes.add("gfilum_matlab.m");
+			//forExcludes.add("gfoclt_matlab.m");
+			//forExcludes.add("gfpa_matlab.m");
+			//forExcludes.add("gfposc_matlab.m");
+			//forExcludes.add("gfrfov_matlab.m");
+			forExcludes.add("gfrr_matlab.m");  /// TODO header missed P2
+			//forExcludes.add("gfsep_matlab.m");
+			//forExcludes.add("gfsntc_matlab.m");
+			//forExcludes.add("gfsubc_matlab.m");
+			//forExcludes.add("gftfov_matlab.m");
+			//forExcludes.add("inry_matlab.m");
+			forExcludes.add("keep_matlab.m");  //TODO excess preamble file io
+			//forExcludes.add("phaseq_matlab.m");
+			//forExcludes.add("pln_matlab.m");
+			forExcludes.add("pool_matlab.m");  //TODO excess preamb
+			//forExcludes.add("prjp_matlab.m");
+			//forExcludes.add("pxfrm2_matlab.m");
+			//forExcludes.add("spkcov_matlab.m");
+			forExcludes.add("spkcpv_matlab.m");/// TODO file io
+			//forExcludes.add("spk_matlab.m");
+			//forExcludes.add("wind_matlab.m");
+			forExcludes.add("xfmsta_matlab.m"); //TODO end in preamble
  
+			Vector<TestTranslator.Module> modules = new Vector<TestTranslator.Module>();
 			for (File f : list) {
 				System.out.println(f);
 				// exclude master test runner
@@ -1441,8 +1442,13 @@ public class Builder {
 				TestTranslator translator = new TestTranslator(f.getAbsolutePath());
 				if (! translator.translate())
 					break;
+				modules.add( translator.module );
 			}
-			
+			for (TestTranslator.Module module : modules ) {
+				String report =  module.reportEmbedded();
+				if (report != null && ! report.isEmpty())
+					System.out.println( module.name + " : " +report);
+			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}

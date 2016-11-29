@@ -22,20 +22,22 @@ public class TestTranslator {
 	protected String nextLine() {
 		line = lexer.nextLine(rit);
 		if (line == null) return null;
-		if (line.startsWith("for") || line.startsWith("try") || line.startsWith("while")) {
+		if (line.startsWith("for") || 
+				line.startsWith("if") || 
+				line.startsWith("try") || 
+				line.startsWith("while")) {
 			module.blockLevel++;
 		} else if (line.startsWith("end")) {
 			module.blockLevel--;
 		}
-		System.out.print( lineNumbers.get( rit.previousIndex() ));
-		System.out.print(",");
-		if (module != null)
-			System.out.print(module.blockLevel);
-		System.out.print(",");
-		System.out.print( parseState );
-		System.out.print(" : ");
-		System.out.println(line);
-		
+//		System.out.print( lineNumbers.get( rit.previousIndex() ));
+//		System.out.print(",");
+//		if (module != null)
+//			System.out.print(module.blockLevel);
+//		System.out.print(",");
+//		System.out.print( parseState );
+//		System.out.print(" : ");
+//		System.out.println(line);
 		return line;
 	}
 	
@@ -78,6 +80,35 @@ public class TestTranslator {
 			String catcher;
 			Vector<String>  checks;
 			
+			public String reportEmbedded() {
+				int nFor = 0;
+				int nWhile = 0;
+				int nIf = 0;
+				for (String s : setup ) {
+					if (s.startsWith("for")) nFor++;
+					if (s.startsWith("while")) nWhile++;
+					if (s.startsWith("if")) nIf++;
+				}
+				for (String s : steps) {
+					if (s.startsWith("for")) nFor++;
+					if (s.startsWith("while")) nWhile++;
+					if (s.startsWith("if")) nIf++;
+				}
+				for (String s : checks) {
+					if (s.startsWith("for")) nFor++;
+					if (s.startsWith("while")) nWhile++;
+					if (s.startsWith("if")) nIf++;
+				}
+				StringBuffer sb = new StringBuffer();
+				if (nFor > 0)
+					sb.append(String.format("%d for;", nFor ));
+				if (nWhile > 0)
+					sb.append(String.format("%d while;", nWhile ));
+				if (nIf > 0)
+					sb.append(String.format("%d if;", nIf ));
+				return sb.toString();
+			}
+			
 			public String toString() {
 				StringBuffer sb = new StringBuffer();
 				sb.append("   setup\n");
@@ -119,22 +150,37 @@ public class TestTranslator {
 			public Case(String title) {
 				this.title = title;
 				this.forStatement = new Vector<String>();
+				this.forEnds = false;
 				this.subcases = new Vector<Subcase>();
 			}
 			String title;
 			Vector<String>  forStatement;
+			boolean         forEnds;
 			Vector<Subcase> subcases;
+			
+			public String reportEmbedded() {
+				StringBuffer sb = new StringBuffer();
+				for (Subcase s : subcases) {
+					sb.append(s.reportEmbedded());
+				}
+				return sb.toString();
+			}
 			
 			public String toString() {
 				StringBuffer sb = new StringBuffer();
 				sb.append("  Case: ");
 				sb.append( title );	
 				sb.append('\n');
-				sb.append("   for statements:\n");
-				for (String s : forStatement ) {
-					sb.append("      ");
-					sb.append(s);
-					sb.append('\n');					
+				if (!forStatement.isEmpty()) {
+					sb.append("   for statements:\n");
+					for (String s : forStatement ) {
+						sb.append("      ");
+						sb.append(s);
+						sb.append('\n');					
+					}
+				}
+				if (forEnds) {
+					sb.append("   for end\n");
 				}
 				for (Subcase s : subcases ) {
 					sb.append( s );
@@ -144,6 +190,14 @@ public class TestTranslator {
 		}
 		
 		Vector<Case> cases;
+		
+		public String reportEmbedded() {
+			StringBuffer sb = new StringBuffer();
+			for (Case c : cases) {
+				sb.append(c.reportEmbedded());
+			}
+			return sb.toString();
+		}
 		
 		public String toString() {
 			StringBuffer sb = new StringBuffer();
@@ -173,7 +227,7 @@ public class TestTranslator {
 	
 	protected ParseState parsePreamble() {
 		while (line.indexOf('=') >= 0) {
-			module.preamble.add( line );
+			module.preamble.add( "P1:"+line );
 			line = nextLine();
 		}
 		if (line.startsWith("disp(")) {
@@ -190,7 +244,7 @@ public class TestTranslator {
 	protected ParseState parseTestCase() {
 		System.out.println(line);
 		while (! (line.startsWith("tutils_tcase") || line.startsWith("for")) ) {
-			module.preamble.add( line );
+			module.preamble.add( "P2:"+line );
 			line = nextLine();
 			if (line == null) return ParseState.ERROR;
 		}
@@ -228,17 +282,34 @@ public class TestTranslator {
 		}
 		if (line.startsWith("end")) {
 //			module.cases.lastElement().forLevel--;
-			return module.blockLevel == 0;
+			return module.blockLevel <= 0;
 		}
 		return false;
+	}
+	
+	protected boolean isFunctionUnderTest() {
+		if (line.indexOf("cspice_") >= 0) {
+			if (line.indexOf("cspice_kclear") >= 0) return false;
+			return true;
+		} else if (line.indexOf("mice_") >= 0) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	protected ParseState parseSubcases() {
 		Module.Subcase subcase = module.new Subcase();
 		while (line.indexOf('=') >= 0) {
-			if (line.indexOf("cspice_") >= 0 || line.indexOf("mice_") >= 0) {
+			if (isFunctionUnderTest()) {
 				break;
 			} else {
+				if (line.startsWith("if")) {
+					while (line != null && !line.equals("end")) {
+						subcase.setup.add(line);
+						line = nextLine();
+					}
+				} 
 				subcase.setup.add( line );
 				line = nextLine();
 			}
@@ -264,7 +335,14 @@ public class TestTranslator {
 						break;
 					if ( line.equals("try"))
 						break;
-					subcase.checks.add(line);
+					if (line.startsWith("if")) {
+						while (line != null && !line.equals("end")) {
+							subcase.checks.add("S1:"+line);
+							line = nextLine();
+						}
+						continue;
+					}
+					subcase.checks.add("S2:"+module.blockLevel+":"+line);
 					if (rit.hasNext()) {
 						line = nextLine();
 					} else {
@@ -293,7 +371,7 @@ public class TestTranslator {
 						emptySubcase = true;
 						break;
 					}
-					subcase.checks.add(line);
+					subcase.checks.add("S3:"+line);
 					if (rit.hasNext()) {
 						line = nextLine();
 					} else {
@@ -353,6 +431,7 @@ public class TestTranslator {
 				lastState = parseState;
 				parseState = parseSubcases();
 				if (line != null && line.equals("end")) {
+					module.cases.lastElement().forEnds = true;
 					line = nextLine();
 				}
 				break;
@@ -367,6 +446,7 @@ public class TestTranslator {
 		}
 		cleanup();
 		System.out.println(module);
+		System.out.println(module.reportEmbedded());
 		return true;
 	}
 	
