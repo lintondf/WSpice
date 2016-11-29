@@ -18,7 +18,7 @@ import java.util.Vector;
 import org.apache.commons.io.FileUtils;
 
 public class Builder {
-	
+
 	public static final boolean isMacOS = System.getProperty("os.name").startsWith("Mac");
 
 	static final String FUNCTION_TOKEN1 = "void cspice_";
@@ -29,36 +29,22 @@ public class Builder {
 	static final String CHECK_EXTRA_TOKEN = "extra = mice_checkargs";
 	static final String MEMSET_TOKEN = "memset(";
 	static final String ONE_LINE_TOKEN = "plhs[0] = mxCreate";
-	
-	static final String packageTemplate = "BeginPackage[\"WSpice`\", {\"CCompilerDriver`\"}]\n" + 
-			"\n" + 
-			"(* External Interface Declarations *)\n\n" + 
-			"%s\n" +
-			"Begin[\"`Private`\"]\n\n" + 
-			"    sourcePath = \"/Users/lintondf/workspace/WSpice/src/wspice.c\";\n" + 
-			"    libraryName = \"wspice\";\n" + 
-			"    \n" + 
-			"    sharedLibraryPath := CreateLibrary[File[sourcePath], libraryName,\n" + 
-			"\"CompileOptions\"->\"-fPIC\" , \"IncludeDirectories\"->{\"/Users/lintondf/cspice/include\"},\n" + 
-			"\"LibraryDirectories\"->{\"/Users/lintondf/cspice/lib\"},\n" + 
-			"\"Libraries\"->{\"cspice\"}]\n" + 
-			"\n" + 
-			"     LibraryLoad[sharedLibraryPath]; Print[\"Startup Complete\"]\n" + 
-			"     	      \n" + 
-			"shutdown[] :=\n" + 
-			"	Module[ {},\n" + 
-			"	      LibraryUnload[sharedLibraryPath]]\n" + 
-			"	      \n" + 
-			"%s\n\n" + 
-			"\"WSpice Loaded\";\n" + 
-			"\n" + 
-			"End[]\n" + 
-			"EndPackage[]\n";
+
+	static final String packageTemplate = "BeginPackage[\"WSpice`\", {\"CCompilerDriver`\"}]\n" + "\n"
+			+ "(* External Interface Declarations *)\n\n" + "%s\n" + "Begin[\"`Private`\"]\n\n"
+			+ "    sourcePath = \"/Users/lintondf/workspace/WSpice/src/wspice.c\";\n"
+			+ "    libraryName = \"wspice\";\n" + "    \n"
+			+ "    sharedLibraryPath := CreateLibrary[File[sourcePath], libraryName,\n"
+			+ "\"CompileOptions\"->\"-fPIC\" , \"IncludeDirectories\"->{\"/Users/lintondf/cspice/include\"},\n"
+			+ "\"LibraryDirectories\"->{\"/Users/lintondf/cspice/lib\"},\n" + "\"Libraries\"->{\"cspice\"}]\n" + "\n"
+			+ "     LibraryLoad[sharedLibraryPath]; Print[\"Startup Complete\"]\n" + "     	      \n"
+			+ "shutdown[] :=\n" + "	Module[ {},\n" + "	      LibraryUnload[sharedLibraryPath]]\n" + "	      \n"
+			+ "%s\n\n" + "\"WSpice Loaded\";\n" + "\n" + "End[]\n" + "EndPackage[]\n";
 	StringBuffer packageUsages = new StringBuffer();
 	StringBuffer packageDeclarations = new StringBuffer();
 
 	protected static PrintStream log = System.out;
-	
+
 	protected Lexer lexer = new Lexer();
 
 	public class Variable {
@@ -157,8 +143,7 @@ public class Builder {
 		}
 
 		public String toString() {
-			return name + " " + type + " " + rank + " " + dims.size() + " "
-					+ isVectorizable;
+			return name + " " + type + " " + rank + " " + dims.size() + " " + isVectorizable;
 		}
 
 		boolean parse(String line) {
@@ -200,8 +185,7 @@ public class Builder {
 							t = t.substring(1);
 						}
 						if (t.endsWith("}")) {
-							dims.add(Integer.parseInt(t.substring(0,
-									t.length() - 1)));
+							dims.add(Integer.parseInt(t.substring(0, t.length() - 1)));
 							break;
 						} else {
 							dims.add(Integer.parseInt(t));
@@ -254,18 +238,16 @@ public class Builder {
 		}
 
 		public String toString() {
-			return name + " " + position + " " + isOutput + " " + isArray + " "
-					+ type + " " + argCheck + " " + variable;
+			return name + " " + position + " " + isOutput + " " + isArray + " " + type + " " + argCheck + " "
+					+ variable;
 		}
 
-		public boolean parse(HashMap<String, ArgCheck> args,
-				HashMap<String, Variable> vars, String line) {
+		public boolean parse(HashMap<String, ArgCheck> args, HashMap<String, Variable> vars, String line) {
 			if (line.startsWith("mxGetString")) {
 				type = "String";
 				isOutput = false;
 				isArray = false;
-				String[] tokens = lexer.splitNoEmpties(line,
-						",| |\\(|\\)|\\[|\\]");
+				String[] tokens = lexer.splitNoEmpties(line, ",| |\\(|\\)|\\[|\\]");
 				if (!tokens[1].equals("prhs"))
 					return false;
 				position = Integer.parseInt(tokens[2]);
@@ -471,12 +453,12 @@ public class Builder {
 		boolean hasMemset = false;
 		Documentation doc = new Documentation();
 		doc.load(name);
-		String[] mfunc = lexer.splitNoEmpties( doc.mfunc.toString(), " |\\[|\\]|\\(|\\)");
+		String[] mfunc = lexer.splitNoEmpties(doc.mfunc.toString(), " |\\[|\\]|\\(|\\)");
 		if (!mfunc[0].equals("function"))
 			throw new Exception("Bad matlab function def in .m file");
 		Vector<String> outputNames = new Vector<String>();
 		Vector<String> inputNames = new Vector<String>();
-		int i = 1; 
+		int i = 1;
 		while (!mfunc[i].equals(name)) {
 			if (mfunc[i].equals("=")) {
 				i++;
@@ -516,7 +498,7 @@ public class Builder {
 			if (!line.isEmpty()) {
 				Variable var = new Variable();
 				var.parse(line);
-				// log.println("  >" + var);
+				// log.println(" >" + var);
 				vars.put(var.name, var);
 			}
 		}
@@ -538,7 +520,7 @@ public class Builder {
 						line = lexer.nextNonBlank(it);
 						break;
 					} else if (line.endsWith(",")) {
-						// log.println("  -" + line );
+						// log.println(" -" + line );
 						ArgCheck ac = new ArgCheck();
 						ac.parse(line);
 						args.put(ac.name, ac);
@@ -570,21 +552,22 @@ public class Builder {
 				Parameter param = new Parameter("lhs", "Real", 0);
 				output.add(param);
 			} else {
-				log.println("  !"
-						+ line.substring(ONE_LINE_TOKEN.length()));
+				log.println("  !" + line.substring(ONE_LINE_TOKEN.length()));
 			}
 		} else {
 			// scan up to C function invocation
-			if (target != null) log.println("? " + line);
+			if (target != null)
+				log.println("? " + line);
 			String baseName = name;
 			int idx = baseName.indexOf("_");
 			if (idx >= 0) {
-				baseName = baseName.substring(0,idx);
+				baseName = baseName.substring(0, idx);
 			}
 			while (line != null && line.indexOf(baseName) == -1) {
-				if (target != null) log.println("  @" + line);
+				if (target != null)
+					log.println("  @" + line);
 				if (line.startsWith("/*")) {
-					while(!line.endsWith("*/")) {
+					while (!line.endsWith("*/")) {
 						line = lexer.nextNonBlank(it);
 					}
 					line = lexer.nextNonBlank(it);
@@ -601,10 +584,10 @@ public class Builder {
 							input.add(param);
 						} catch (Exception x) {
 							System.err.println(x);
-							System.err.println("  @??? " + line );
+							System.err.println("  @??? " + line);
 						}
 					} else {
-						System.err.println("  @??? " + line );
+						System.err.println("  @??? " + line);
 					}
 				} else if (line.indexOf("mxGetNumberOfElements") == -1) {
 					String[] tokens = lexer.splitNoEmpties(line, " ");
@@ -624,20 +607,21 @@ public class Builder {
 				line = lexer.nextNonBlank(it);
 			}
 		}
-		// log.println("  ." + line);
+		// log.println(" ." + line);
 		HashMap<String, Parameter> fields = new HashMap<String, Parameter>();
 		StringBuffer call = new StringBuffer();
 		Vector<String> sizearray = new Vector<String>();
-		
-		// scan remaining C code body extracting c function invocation and outputs
-		
+
+		// scan remaining C code body extracting c function invocation and
+		// outputs
+
 		while (it.hasNext()) {
 			line = lexer.nextLine(it);
 			if (line == null || lexer.indent == 0)
 				break;
 			// skip comment blocks
 			if (line.startsWith("/*")) {
-				while(!line.endsWith("*/")) {
+				while (!line.endsWith("*/")) {
 					line = lexer.nextNonBlank(it);
 				}
 				line = lexer.nextNonBlank(it);
@@ -651,64 +635,62 @@ public class Builder {
 				}
 				line = lexer.nextNonBlank(it);
 			}
-//			if (call != null) {
-//				if (line.indexOf("mxSetField") >= 0) {
-//					StringBuffer fline = new StringBuffer();
-//					fline.append(line);
-//					while (!line.endsWith(");")) {
-//						line = nextLine(it);
-//						fline.append(line);
-//					}
-//					Parameter field = parseField(fline.toString());
-//					fields.put(field.name, field);
-//				} else {
-//					log.println(line);
-//					if (line.startsWith("sizearray[")) {
-//						sizearray.add(line);
-//					}
-//					if (line.startsWith("plhs[")) {
-//						Parameter result = parseResult( it, line, outputNames, sizearray, output, vars, args );
-//						line = nextNonBlank(it);  // parseResults backs to last used line
-//						output.addElement( result );
-//						sizearray.clear();
-//					}
-//				}
-//			} else if (call.length() > 0) {
-//				if (!line.isEmpty())
-//					log.println("[" + name + "]: " + line );
-//			}
+			// if (call != null) {
+			// if (line.indexOf("mxSetField") >= 0) {
+			// StringBuffer fline = new StringBuffer();
+			// fline.append(line);
+			// while (!line.endsWith(");")) {
+			// line = nextLine(it);
+			// fline.append(line);
+			// }
+			// Parameter field = parseField(fline.toString());
+			// fields.put(field.name, field);
+			// } else {
+			// log.println(line);
+			// if (line.startsWith("sizearray[")) {
+			// sizearray.add(line);
+			// }
+			// if (line.startsWith("plhs[")) {
+			// Parameter result = parseResult( it, line, outputNames, sizearray,
+			// output, vars, args );
+			// line = nextNonBlank(it); // parseResults backs to last used line
+			// output.addElement( result );
+			// sizearray.clear();
+			// }
+			// }
+			// } else if (call.length() > 0) {
+			// if (!line.isEmpty())
+			// log.println("[" + name + "]: " + line );
+			// }
 		}
-		
-		
+
 		StringBuffer sb;
 		outputMathematicaFunctionDefinition(name, doc, output, input, fields);
-		
+
 		// Output usage block
-		
+
 		packageUsages.append(name + "::usage = ");
-		packageUsages.append( String.format("\"%s\";\n", doc.usage.toString()) );
+		packageUsages.append(String.format("\"%s\";\n", doc.usage.toString()));
 		// Output expected block
 		packageUsages.append("  " + name + "::expected = ");
 		sb = new StringBuffer();
 		inputSignature(name, input, sb, true, false);
-		packageUsages.append( String.format("\"%s]\";\n", sb.toString()) );
+		packageUsages.append(String.format("\"%s]\";\n", sb.toString()));
 		if (!input.isEmpty()) {
 			sb = new StringBuffer();
 			inputSignature(name, input, sb, false, false);
-			packageUsages.append( String.format("  %s] := Message[%s::expected];\n",
-					sb.toString(), name ));
+			packageUsages.append(String.format("  %s] := Message[%s::expected];\n", sb.toString(), name));
 		}
-		packageUsages.append( String.format("  %s[___] := Message[%s::expected];\n", name,
-				name) );
-		
+		packageUsages.append(String.format("  %s[___] := Message[%s::expected];\n", name, name));
+
 		if (target != null) {
 			log.println("I " + input.size());
 			for (Parameter p : input) {
-				log.println( "I: " + p );
+				log.println("I: " + p);
 			}
 			log.println("O " + output.size());
 			for (Parameter p : output) {
-				log.println( "O: " + p );
+				log.println("O: " + p);
 			}
 			log.println("V " + vars.size());
 			for (String key : vars.keySet()) {
@@ -722,8 +704,7 @@ public class Builder {
 		return true;
 	}
 
-	protected void outputMathematicaFunctionDefinition(String name,
-			Documentation doc, Vector<Parameter> output,
+	protected void outputMathematicaFunctionDefinition(String name, Documentation doc, Vector<Parameter> output,
 			Vector<Parameter> input, HashMap<String, Parameter> fields) {
 		// Output Mathematica function declaration
 		StringBuffer sb = new StringBuffer();
@@ -735,15 +716,15 @@ public class Builder {
 		sb.append(" *\n");
 		sb.append(doc.abstrakt.toString());
 		sb.append(" *  " + doc.mfunc.toString() + "\n");
-		//sb.append(doc.io.toString());
-		//sb.append(doc.reading.toString());
+		// sb.append(doc.io.toString());
+		// sb.append(doc.reading.toString());
 		sb.append(" *)\n");
 		if (output.isEmpty() && !fields.isEmpty()) {
 			// for (String var : vars.keySet()) {
-			// log.println( "  :v: " + vars.get(var));
+			// log.println( " :v: " + vars.get(var));
 			// }
 			// for (String var : fields.keySet()) {
-			// log.println( "  :f: " + fields.get(var));
+			// log.println( " :f: " + fields.get(var));
 			// }
 			// log.println();
 			sb.append("$");
@@ -807,20 +788,16 @@ public class Builder {
 	}
 
 	// called for lines starting with plhs
-	/* Interior blank lines are ignored
-	 * Handled idioms:
-	 * 1------------------
-	 *  plhs[0]  = mxCreateDoubleMatrix( dim, 1, mxREAL );
-	 *  values   = A_DBL_RET_ARGV(0);
-	 *  MOVED( ret_values, dim, values );
-	 * 2------------------
+	/*
+	 * Interior blank lines are ignored Handled idioms: 1------------------
+	 * plhs[0] = mxCreateDoubleMatrix( dim, 1, mxREAL ); values =
+	 * A_DBL_RET_ARGV(0); MOVED( ret_values, dim, values ); 2------------------
 	 */
-	private Parameter parseResult(ListIterator<String> it, String line,
-			Vector<String> outputNames,
+	private Parameter parseResult(ListIterator<String> it, String line, Vector<String> outputNames,
 			Vector<String> sizearray, Vector<Parameter> output, HashMap<String, Variable> vars,
 			HashMap<String, ArgCheck> args) throws Exception {
 		log.println("parseResult: " + line);
-		String[] tokens = lexer.splitNoEmpties( line, " |,|\\[|\\]|\\(|\\)" );
+		String[] tokens = lexer.splitNoEmpties(line, " |,|\\[|\\]|\\(|\\)");
 		if (tokens[0].equals("plhs") && tokens[2].equals("=")) {
 			int position = Integer.parseInt(tokens[1]);
 			String name = outputNames.get(position);
@@ -829,12 +806,12 @@ public class Builder {
 				p.isArray = true;
 				p.isOutput = true;
 				p.allocation = new Vector<String>();
-				p.allocation.add( tokens[4] );
-				p.allocation.add( tokens[5] );
+				p.allocation.add(tokens[4]);
+				p.allocation.add(tokens[5]);
 				String l1 = lexer.nextNonBlank(it);
 				String l2 = lexer.nextNonBlank(it);
 				if (l1.indexOf("A_DBL_RET_ARGV") >= 0 && l2.startsWith("MOVED")) {
-					tokens = lexer.splitNoEmpties( l1, " |=");
+					tokens = lexer.splitNoEmpties(l1, " |=");
 					String pointerName = tokens[0];
 					l2 = l2.replaceAll(pointerName, "*");
 					p.copy = l2;
@@ -878,8 +855,8 @@ public class Builder {
 		return field;
 	}
 
-	protected void inputSignature(String name, Vector<Parameter> input,
-			StringBuffer sb, boolean document, boolean pattern) {
+	protected void inputSignature(String name, Vector<Parameter> input, StringBuffer sb, boolean document,
+			boolean pattern) {
 		sb.append(name);
 		sb.append("[");
 		boolean first = true;
@@ -892,8 +869,7 @@ public class Builder {
 			if (pattern) {
 				if (param.isArray) {
 					if (param.argCheck.rank == 1) {
-						sb.append(String.format("List /; Length[%s] == %d",
-								name, param.argCheck.dims.get(0)));
+						sb.append(String.format("List /; Length[%s] == %d", name, param.argCheck.dims.get(0)));
 					} else {
 						StringBuffer dsb = new StringBuffer();
 						boolean f = true;
@@ -903,9 +879,7 @@ public class Builder {
 							f = false;
 							dsb.append(d.toString());
 						}
-						sb.append(String.format(
-								"List /; Dimensions[%s] == {%s}", name,
-								dsb.toString()));
+						sb.append(String.format("List /; Dimensions[%s] == {%s}", name, dsb.toString()));
 					}
 				} else {
 					switch (param.type) {
@@ -934,9 +908,9 @@ public class Builder {
 	HashMap<String, String> index = new HashMap<String, String>();
 
 	protected void loadIndex() {
-		File txt = new File( (isMacOS) ? "/Users/lintondf/Library/Mathematica/Applications/DFL/" :
-			                       "C:\\Users\\Barbara\\GIT\\WSpice", 
-                    				"index.txt");
+		File txt = new File(
+				(isMacOS) ? "/Users/lintondf/Library/Mathematica/Applications/DFL/" : "C:\\Users\\Barbara\\GIT\\WSpice",
+				"index.txt");
 		try {
 			List<String> lines = FileUtils.readLines(txt, "UTF-8");
 			ListIterator<String> it = lines.listIterator();
@@ -951,8 +925,7 @@ public class Builder {
 				// log.print("<"+token.trim()+">");
 				// }
 				// log.println();
-				index.put(tokens[0].trim().substring(0, tokens[0].length() - 3)
-						.toLowerCase(), tokens[1].trim());
+				index.put(tokens[0].trim().substring(0, tokens[0].length() - 3).toLowerCase(), tokens[1].trim());
 			}
 			// for (String name : index.keySet()) {
 			// log.println(name + " - " + index.get(name));
@@ -985,7 +958,7 @@ public class Builder {
 			line = line.replaceAll(name.toUpperCase(), name);
 			return line;
 		}
-		
+
 		protected void parseIO(String name) {
 			String[] linesArray = io.toString().split("\n");
 			List<String> lines = Arrays.asList(linesArray);
@@ -1005,21 +978,24 @@ public class Builder {
 										if (decl[0].equals("None.")) {
 											continue;
 										} else if (decl[0].endsWith(",")) {
-											//log.println(name +":" +"R, " + decl[0]);
-											continue; // TODO accumlate variable list
+											// log.println(name +":" +"R, " +
+											// decl[0]);
+											continue; // TODO accumlate variable
+														// list
 										}
 									} else {
-										System.err.println(name +":" +"R! " + line );
+										System.err.println(name + ":" + "R! " + line);
 									}
 									break;
 								}
-								//log.println(name +":" +"R; " + decl[0]);
-								//log.println(name +":" +"R: " + decl[1].trim() );
+								// log.println(name +":" +"R; " + decl[0]);
+								// log.println(name +":" +"R: " + decl[1].trim()
+								// );
 								line = decl[1].trim();
 								if (line.startsWith("a ") || line.startsWith("the ")) {
-									
+
 								} else {
-									//log.println(name +":" + "R? " + line );
+									// log.println(name +":" + "R? " + line );
 								}
 								while (lit.hasNext()) {
 									line = lit.next();
@@ -1035,7 +1011,8 @@ public class Builder {
 										} else {
 											lit.previous();
 										}
-										//log.println(name +":" +"R# " + line );
+										// log.println(name +":" +"R# " + line
+										// );
 									}
 								}
 							}
@@ -1045,15 +1022,13 @@ public class Builder {
 				}
 			}
 			if (results == null) {
-				log.println(name + ":Missing return block" );
+				log.println(name + ":Missing return block");
 			}
 		}
 
 		public void load(String name) {
-			File dotm = new File( (isMacOS) ? "/Users/lintondf/Google Drive/cspice/mice/" : 
-				    "C:\\Users\\Barbara\\Google Drive\\cspice\\mice",
-					"cspice_" + name
-							+ ".m");
+			File dotm = new File((isMacOS) ? "/Users/lintondf/Google Drive/cspice/mice/"
+					: "C:\\Users\\Barbara\\Google Drive\\cspice\\mice", "cspice_" + name + ".m");
 			try {
 				List<String> lines = FileUtils.readLines(dotm, "UTF-8");
 				ListIterator<String> it = lines.listIterator();
@@ -1107,15 +1082,15 @@ public class Builder {
 					if (line != null && line.startsWith("function")) {
 						mfunc = new StringBuffer();
 						line = line.replaceAll("\\s{2,}", " ").trim();
-//						line = line.replaceAll("          ", " ");
-//						line = line.replaceAll("         ", " ");
-//						line = line.replaceAll("        ", " ");
-//						line = line.replaceAll("       ", " ");
-//						line = line.replaceAll("      ", " ");
-//						line = line.replaceAll("     ", " ");
-//						line = line.replaceAll("    ", " ");
-//						line = line.replaceAll("   ", " ");
-//						line = line.replaceAll("  ", " ");
+						// line = line.replaceAll(" ", " ");
+						// line = line.replaceAll(" ", " ");
+						// line = line.replaceAll(" ", " ");
+						// line = line.replaceAll(" ", " ");
+						// line = line.replaceAll(" ", " ");
+						// line = line.replaceAll(" ", " ");
+						// line = line.replaceAll(" ", " ");
+						// line = line.replaceAll(" ", " ");
+						// line = line.replaceAll(" ", " ");
 						mfunc.append(line.replaceAll("\\.\\.\\.", ""));
 						while (line != null && line.endsWith("...")) {
 							line = nextDocLine(it, name);
@@ -1173,12 +1148,11 @@ public class Builder {
 		exclude.add("vsep");
 		exclude.add("wninsd");
 		exclude.add("xf2eul");
-		
+
 		loadIndex();
 		String name = null;
-		File mice = new File( (isMacOS) ? "/Users/lintondf/Google Drive/cspice/mice/" : 
-			"C:\\Users\\Barbara\\Google Drive\\cspice\\mice",
-				"mice.c");
+		File mice = new File((isMacOS) ? "/Users/lintondf/Google Drive/cspice/mice/"
+				: "C:\\Users\\Barbara\\Google Drive\\cspice\\mice", "mice.c");
 		try {
 			List<String> lines = FileUtils.readLines(mice, "UTF-8");
 			ListIterator<String> it = lines.listIterator();
@@ -1196,7 +1170,7 @@ public class Builder {
 						continue;
 					if (target == null) {
 						if (exclude.contains(name))
-							continue;						
+							continue;
 					} else if (!name.equals(target))
 						continue;
 					if (!scanFunction(it, name)) {
@@ -1204,7 +1178,7 @@ public class Builder {
 						System.err.println(it.next());
 					}
 				} else if (line.startsWith(FUNCTION_TOKEN2)) { // mice_
-				    name = line.substring(FUNCTION_TOKEN2.length());
+					name = line.substring(FUNCTION_TOKEN2.length());
 					name = name.substring(0, name.indexOf('('));
 					while (!line.endsWith(")")) {
 						line = lexer.nextLine(it);
@@ -1214,7 +1188,7 @@ public class Builder {
 						continue;
 					if (target == null) {
 						if (exclude.contains(name))
-							continue;						
+							continue;
 					} else if (!name.equals(target))
 						continue;
 					if (!scanFunction(it, name)) {
@@ -1223,23 +1197,22 @@ public class Builder {
 					}
 				}
 			}
-			PrintStream packageFile = new PrintStream( new FileOutputStream( new File("wspice.wl") ) );
-			packageFile.printf(packageTemplate, 
-					packageUsages.toString().substring(0, 1), 
-					packageDeclarations.toString() );
+			PrintStream packageFile = new PrintStream(new FileOutputStream(new File("wspice.wl")));
+			packageFile.printf(packageTemplate, packageUsages.toString().substring(0, 1),
+					packageDeclarations.toString());
 			packageFile.close();
 		} catch (Exception e) {
-			System.err.printf("		exclude.add(\"%s\");\n", name );
+			System.err.printf("		exclude.add(\"%s\");\n", name);
 			e.printStackTrace();
 		}
 	}
-	
+
 	static class Result {
-		String  name;
-		String  type;
-		String  dims;
+		String name;
+		String type;
+		String dims;
 		boolean isVectorizable;
-		
+
 		public String toString() {
 			String dimsString = "scalar";
 			if (dims != null) {
@@ -1248,15 +1221,15 @@ public class Builder {
 				else
 					dimsString = dims;
 			}
-			return name +":"+ type +":"+ dimsString + ((isVectorizable) ? "[]" : "");
+			return name + ":" + type + ":" + dimsString + ((isVectorizable) ? "[]" : "");
 		}
-		
-		protected String removeDims( String decl ) {
+
+		protected String removeDims(String decl) {
 			int i = decl.indexOf('(');
 			if (i >= 0) {
 				int j = decl.indexOf(')');
 				if (j >= 0) {
-					dims = decl.substring(i, j+1);
+					dims = decl.substring(i, j + 1);
 				} else {
 					log.println(decl);
 				}
@@ -1264,53 +1237,51 @@ public class Builder {
 			}
 			return decl;
 		}
- 		
-		public Result( String decl ) {
+
+		public Result(String decl) {
 			type = "Number";
 			if (decl.startsWith("_")) {
-				decl = decl.substring(1, decl.length()-1);
+				decl = decl.substring(1, decl.length() - 1);
 				isVectorizable = true;
 				if (decl.startsWith("`")) {
-					decl = decl.substring(1, decl.length()-1);
+					decl = decl.substring(1, decl.length() - 1);
 					type = "String";
 				}
-				name = removeDims( decl );
+				name = removeDims(decl);
 			} else if (decl.startsWith("`")) {
-				decl = decl.substring(1, decl.length()-1);
+				decl = decl.substring(1, decl.length() - 1);
 				type = "String";
-				name = removeDims( decl );
+				name = removeDims(decl);
 			} else {
-				name = removeDims( decl );
+				name = removeDims(decl);
 			}
 		}
 
 		public static Vector<Result> parseDeclaration(String[] tokens) {
-			Vector<Result> results = new Vector<Result> ();
+			Vector<Result> results = new Vector<Result>();
 			for (int i = 1; i < tokens.length; i++) {
-				if (tokens[i].equals("=")) 
+				if (tokens[i].equals("="))
 					break;
 				String t = tokens[i];
 				if (t.endsWith(","))
-					t.substring(0, t.length()-1);
+					t.substring(0, t.length() - 1);
 				Result r = new Result(t);
 				results.add(r);
 			}
 			return results;
 		}
 	}
-	
+
 	HashMap<String, Vector<Result>> outputSequences = new HashMap<String, Vector<Result>>();
-	
+
 	public void scanCallSequenceIndex(String filename) {
-		File mice = new File( (isMacOS) ? "/Users/lintondf/GIT/WSpice/": 
-			"C:\\Users\\Barbara\\GIT\\WSpice", 
-				filename);
+		File mice = new File((isMacOS) ? "/Users/lintondf/GIT/WSpice/" : "C:\\Users\\Barbara\\GIT\\WSpice", filename);
 		try {
 			List<String> lines = FileUtils.readLines(mice, "UTF-8");
 			ListIterator<String> it = lines.listIterator();
 			while (it.hasNext()) {
 				String line = lexer.nextLine(it);
-				//log.println(line.length() + " [" + line + "]");
+				// log.println(line.length() + " [" + line + "]");
 				if (line.equals("A"))
 					break;
 			}
@@ -1324,47 +1295,47 @@ public class Builder {
 				String[] tokens = lexer.splitNoEmpties(line, ":| |\\[|\\]");
 				if (tokens.length < 3) {
 					for (String token : tokens) {
-						log.print("<"+ token + ">");
+						log.print("<" + token + ">");
 					}
 					log.println();
 					continue;
 				}
 				String allCapsName = tokens[0];
-				Vector<Result> results = Result.parseDeclaration( tokens );
-				outputSequences.put( allCapsName.toLowerCase(), results );
+				Vector<Result> results = Result.parseDeclaration(tokens);
+				outputSequences.put(allCapsName.toLowerCase(), results);
 			}
-			
+
 			ArrayList<String> keys = new ArrayList<String>();
 			if (target == null) {
 				keys.addAll(outputSequences.keySet());
 			} else {
-				keys.add( target );
+				keys.add(target);
 			}
-			Collections.sort( keys );
-			for (String key : keys ) {
+			Collections.sort(keys);
+			for (String key : keys) {
 				log.print(key + " : ");
 				Vector<Result> results = outputSequences.get(key);
 				for (Result r : results) {
-					log.print("{" + r +"} " );
+					log.print("{" + r + "} ");
 				}
 				log.println();
 			}
-			for (String key : keys ) {
+			for (String key : keys) {
 				Vector<Result> results = outputSequences.get(key);
 				if (results == null)
 					log.println(key + " Null Results");
 			}
-			for (String key : keys ) {
+			for (String key : keys) {
 				Vector<Result> results = outputSequences.get(key);
 				if (results != null && results.isEmpty())
 					log.println(key + " Empty Results");
 			}
-			for (String key : keys ) {
+			for (String key : keys) {
 				Vector<Result> results = outputSequences.get(key);
 				if (results != null && results.size() == 1)
-					log.println(key + " One Result " + results.get(0) );
+					log.println(key + " One Result " + results.get(0));
 			}
-			for (String key : keys ) {
+			for (String key : keys) {
 				Vector<Result> results = outputSequences.get(key);
 				if (results != null && results.size() > 1)
 					log.println(key + " Many Results");
@@ -1376,78 +1347,82 @@ public class Builder {
 
 	public static void main(String[] args) {
 		try {
-			log = new PrintStream( new FileOutputStream( new File("log.txt") ) );
-//			Builder builder = new Builder();
-//			builder.scanCallSequenceIndex("mice_index.txt");
-//			builder.translate();
-			
-//			{
-//			TestTranslator translator = new TestTranslator(
-//					"C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice/xfmsta_matlab.m");
-//			if (translator.translate())
-//				return;
-//			}
-			File dir = new File("C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice");
-			File[] list = dir.listFiles(new FilenameFilter() {
-			    @Override
-			    public boolean accept(File dir, String name) {
-			        return name.endsWith("_matlab.m");
-			    }
-			});	
-			
-			Vector<String> forExcludes = new Vector<String>();
-			//forExcludes.add("ckcov_matlab.m");
-			//forExcludes.add("ck_matlab.m");
-			//forExcludes.add("cnst_matlab.m");
-			//forExcludes.add("daf_matlab.m");
-			//forExcludes.add("dvops_matlab.m"); // three cases inside one for
-			//forExcludes.add("dvsep_matlab.m");
-			//forExcludes.add("edln_matlab.m"); // if else end in setup
-			//forExcludes.add("ek01_matlab.m");
-			//forExcludes.add("fovray_matlab.m");
-			//forExcludes.add("fovtrg_matlab.m");
-			//forExcludes.add("gfdist_matlab.m");
-			//forExcludes.add("gfilum_matlab.m");
-			//forExcludes.add("gfoclt_matlab.m");
-			//forExcludes.add("gfpa_matlab.m");
-			//forExcludes.add("gfposc_matlab.m");
-			//forExcludes.add("gfrfov_matlab.m");
-			forExcludes.add("gfrr_matlab.m");  /// TODO header missed P2
-			//forExcludes.add("gfsep_matlab.m");
-			//forExcludes.add("gfsntc_matlab.m");
-			//forExcludes.add("gfsubc_matlab.m");
-			//forExcludes.add("gftfov_matlab.m");
-			//forExcludes.add("inry_matlab.m");
-			forExcludes.add("keep_matlab.m");  //TODO excess preamble file io
-			//forExcludes.add("phaseq_matlab.m");
-			//forExcludes.add("pln_matlab.m");
-			forExcludes.add("pool_matlab.m");  //TODO excess preamb
-			//forExcludes.add("prjp_matlab.m");
-			//forExcludes.add("pxfrm2_matlab.m");
-			//forExcludes.add("spkcov_matlab.m");
-			forExcludes.add("spkcpv_matlab.m");/// TODO file io
-			//forExcludes.add("spk_matlab.m");
-			//forExcludes.add("wind_matlab.m");
-			forExcludes.add("xfmsta_matlab.m"); //TODO end in preamble
- 
-			Vector<TestTranslator.Module> modules = new Vector<TestTranslator.Module>();
-			for (File f : list) {
-				System.out.println(f);
-				// exclude master test runner
-				if (f.getName().equals("tspice_matlab.m"))
-					continue;
-				// exclude tests with nested for statement; hand translate these
-				if ( forExcludes.contains( f.getName() ) )
-					continue;
-				TestTranslator translator = new TestTranslator(f.getAbsolutePath());
-				if (! translator.translate())
-					break;
-				modules.add( translator.module );
-			}
-			for (TestTranslator.Module module : modules ) {
-				String report =  module.reportEmbedded();
-				if (report != null && ! report.isEmpty())
-					System.out.println( module.name + " : " +report);
+			log = new PrintStream(new FileOutputStream(new File("log.txt")));
+			// Builder builder = new Builder();
+			// builder.scanCallSequenceIndex("mice_index.txt");
+			// builder.translate();
+
+			if (args.length > 0) {
+				TestTranslator translator = new TestTranslator(
+						"C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice/xfmsta_matlab.m");
+				if (translator.translate())
+					return;
+			} else {
+				File dir = new File("C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice");
+				File[] list = dir.listFiles(new FilenameFilter() {
+					@Override
+					public boolean accept(File dir, String name) {
+						return name.endsWith("_matlab.m");
+					}
+				});
+
+				Vector<String> forExcludes = new Vector<String>();
+				// forExcludes.add("ckcov_matlab.m");
+				// forExcludes.add("ck_matlab.m");
+				// forExcludes.add("cnst_matlab.m");
+				// forExcludes.add("daf_matlab.m");
+				// forExcludes.add("dvops_matlab.m"); // three cases inside one
+				// for
+				// forExcludes.add("dvsep_matlab.m");
+				// forExcludes.add("edln_matlab.m"); // if else end in setup
+				// forExcludes.add("ek01_matlab.m");
+				// forExcludes.add("fovray_matlab.m");
+				// forExcludes.add("fovtrg_matlab.m");
+				// forExcludes.add("gfdist_matlab.m");
+				// forExcludes.add("gfilum_matlab.m");
+				// forExcludes.add("gfoclt_matlab.m");
+				// forExcludes.add("gfpa_matlab.m");
+				// forExcludes.add("gfposc_matlab.m");
+				// forExcludes.add("gfrfov_matlab.m");
+				forExcludes.add("gfrr_matlab.m"); /// TODO header missed P2
+				// forExcludes.add("gfsep_matlab.m");
+				// forExcludes.add("gfsntc_matlab.m");
+				// forExcludes.add("gfsubc_matlab.m");
+				// forExcludes.add("gftfov_matlab.m");
+				// forExcludes.add("inry_matlab.m");
+				forExcludes.add("keep_matlab.m"); // TODO excess preamble file
+													// io
+				// forExcludes.add("phaseq_matlab.m");
+				// forExcludes.add("pln_matlab.m");
+				forExcludes.add("pool_matlab.m"); // TODO excess preamb
+				// forExcludes.add("prjp_matlab.m");
+				// forExcludes.add("pxfrm2_matlab.m");
+				// forExcludes.add("spkcov_matlab.m");
+				forExcludes.add("spkcpv_matlab.m");/// TODO file io
+				// forExcludes.add("spk_matlab.m");
+				// forExcludes.add("wind_matlab.m");
+				forExcludes.add("xfmsta_matlab.m"); // TODO end in preamble
+
+				Vector<TestTranslator.Module> modules = new Vector<TestTranslator.Module>();
+				for (File f : list) {
+					System.out.println(f);
+					// exclude master test runner
+					if (f.getName().equals("tspice_matlab.m"))
+						continue;
+					// exclude tests with nested for statement; hand translate
+					// these
+					if (forExcludes.contains(f.getName()))
+						continue;
+					TestTranslator translator = new TestTranslator(f.getAbsolutePath());
+					if (!translator.translate())
+						break;
+					modules.add(translator.module);
+				}
+				for (TestTranslator.Module module : modules) {
+					String report = module.reportEmbedded();
+					if (report != null && !report.isEmpty())
+						System.out.println(module.name + " : " + report);
+				}
 			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
