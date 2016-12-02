@@ -15,7 +15,13 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Vector;
 
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Token;
 import org.apache.commons.io.FileUtils;
+
+import wspice.MATLABParser.ScriptContext;
+import wspice.MATLABParser.StatBlockContext;
 
 public class Builder {
 
@@ -1345,18 +1351,67 @@ public class Builder {
 		}
 	}
 
+	public static class MyListener extends MATLABParserBaseListener {
+		public MyListener(MATLABParser parser) {
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void enterStatBlock(MATLABParser.StatBlockContext ctx) {
+			System.out.println(ctx);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void exitStatBlock(MATLABParser.StatBlockContext ctx) {
+			System.out.println(ctx);
+		}
+	}
+
+	public static boolean parser(String str) {
+		ANTLRInputStream input = new ANTLRInputStream(str);
+		MATLABLexer lexer = new MATLABLexer(input);
+		CommonTokenStream tokens = new CommonTokenStream(lexer);
+		MATLABParser parser = new MATLABParser(tokens);
+//		tokens.fill();
+//		String[] tokenNames = parser.getTokenNames();
+//		for (Token t : tokens.getTokens()) {
+//			System.out.println(t.toString() + " : " + tokenNames[t.getType()] );
+//		}
+		ScriptContext tree = parser.script(); // parse a compilationUnit
+		//System.out.println(tree.toStringTree(parser));
+		System.out.println( TreeUtils.printTree(tree, parser) );
+		MyListener extractor = new MyListener(parser);
+
+		return true;
+	}
+
 	public static void main(String[] args) {
+		// if (parser("error_tag = ( numel(regexp( lasterr, 'BADENDPOINTS' ) )
+		// ~= 0);")) return;
 		try {
 			log = new PrintStream(new FileOutputStream(new File("log.txt")));
 			// Builder builder = new Builder();
 			// builder.scanCallSequenceIndex("mice_index.txt");
 			// builder.translate();
 
-			if (args.length > 0) {
+			if (args.length == 0) {
 				TestTranslator translator = new TestTranslator(
-						"C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice/xfmsta_matlab.m");
-				if (translator.translate())
+						"C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice/ckcov_matlab.m");
+				if (translator.translate()) {
+					StringBuffer sb = new StringBuffer();
+					int lineNumber = 1;
+					for (String s : translator.module.preamble ) {
+						sb.append(s.substring(3)); sb.append("\n");
+						System.out.printf("%5d : %s\n", lineNumber++, s.substring(3) );
+					}
+					parser(sb.toString());
 					return;
+				}
 			} else {
 				File dir = new File("C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice");
 				File[] list = dir.listFiles(new FilenameFilter() {
