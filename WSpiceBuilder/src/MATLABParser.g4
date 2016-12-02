@@ -100,7 +100,7 @@ scalarAssignStat
     ;    
 
 arrayAssignStat
-    : idRef arrayRef EQUALS expr
+    : arrayRef EQUALS expr
     ;
     
 stat
@@ -114,9 +114,9 @@ stat
     ;
     
 arrayRef
-    : LPAREN exprArrayList RPAREN
-    | LPAREN COLON RPAREN
-    | LPAREN RPAREN 
+    : idRef LPAREN exprArrayList RPAREN
+    | idRef LPAREN COLON RPAREN
+    | idRef LPAREN RPAREN 
     ;   
 
 arrayExpr
@@ -130,7 +130,8 @@ cellExpr
     ;
 
 expr
-    : expr LPAREN exprList RPAREN
+//    : expr LPAREN exprList RPAREN
+    : arrayRef
     | expr (TRANS|CTRANS)
     | expr (MPOW|POW) expr
     | (PLUS|MINUS|NOT) expr
@@ -155,7 +156,9 @@ exprList
     ;
 
 exprArrayList
-    : expr (COMMA? exprArrayList)*    #hcat
-    | expr ((SEMI|NL) exprArrayList)* #vcat
+    : expr (COMMA? expr)*    #hcat
+    | expr ((SEMI|NL) expr)* #vcat
+//    : expr (COMMA? exprArrayList)*    #hcat
+//    | expr ((SEMI|NL) exprArrayList)* #vcat
     ;
     
