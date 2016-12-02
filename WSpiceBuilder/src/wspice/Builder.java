@@ -1449,10 +1449,10 @@ public class Builder {
 			System.out.println();
 		}
 		protected void translateExprArrayList( ParserRuleContext expr ) {
-			showChildren( "ExprArrayList: ", expr );
+//			showChildren( "ExprArrayList: ", expr );
 			for (int i = 0; i < expr.getChildCount(); i++) {
 				ParseTree child = expr.getChild(i);
-				System.out.printf("%d:%s:%s\n", i, child.getClass(), child.getText() );
+//				System.out.printf("%d:%s:%s\n", i, child.getClass(), child.getText() );
 				if ( (i%2) == 0) { // even numbered must be expr
 					if (child instanceof ParserRuleContext) {
 						ParserRuleContext childCtx = (ParserRuleContext)child;
@@ -1471,10 +1471,10 @@ public class Builder {
 		}
 		
 		protected void translateArrayExpr( ParserRuleContext expr ) {
-			if (expr.getChildCount() == 3) {
-				// child[0] TerminalNodeImpl '['
-				// child[1] ParserRuleContext exprArrayList
-				// child[2] TerminalNodeImpl ']'
+			if (expr.getChildCount() == 3 &&
+				isChildTerminal(expr, 0, "[") &&
+				isChildRule( expr, 1, "exprArrayList") &&
+				isChildTerminal(expr, 2, "]") ) {
 				wout.append("{");
 				translateExprArrayList( (ParserRuleContext) expr.getChild(1) );
 				wout.append("}");
@@ -1502,10 +1502,10 @@ public class Builder {
 		
 		protected void translateArrayRef( ParserRuleContext expr ) {
 			if (expr.getChildCount() == 4 &&
-					isChildRule( expr, 0, "idRef" ) &&
-					isChildTerminal( expr, 1, "(" ) &&
-					isChildRule( expr, 2, "exprArrayList" ) &&
-					isChildTerminal( expr, 3, ")" ) ) {
+				isChildRule( expr, 0, "idRef" ) &&
+				isChildTerminal( expr, 1, "(" ) &&
+				isChildRule( expr, 2, "exprArrayList" ) &&
+				isChildTerminal( expr, 3, ")" ) ) {
 				//showChildren( "ArrayRef: ", expr );
 				String symbol = expr.getChild(0).getText();
 				//System.out.println( symbol + " ? " + variables.contains(symbol) );
@@ -1532,7 +1532,11 @@ public class Builder {
 	        for (int i = 0; i < expr.getChildCount(); i++) {
 	        	ParseTree child = expr.getChild(i);
 	        	if (child instanceof TerminalNodeImpl) {
-	        		wout.append(child.getText() );
+	        		String contents = child.getText();
+	        		if (contents.charAt(0) == '\'') {
+	        			contents = String.format("\"%s\"", contents.substring(1, contents.length()-1) );
+	        		}
+	        		wout.append(contents);
 	        	} else if (child instanceof ParserRuleContext) {
 	        		ParserRuleContext childCtx = (ParserRuleContext) child;
 	        		switch (getName(childCtx)) {
@@ -1558,7 +1562,7 @@ public class Builder {
 
 		@Override
 		public void enterScalarAssignStat(MATLABParser.ScalarAssignStatContext ctx) {
-			report( ctx );
+//			report( ctx );
 			if (ctx.getChildCount() == 3) {
 				ParserRuleContext childCtx0 = (ParserRuleContext) ctx.getChild(0);
 				String name0 = getName( childCtx0 );
