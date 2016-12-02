@@ -140,15 +140,15 @@ public interface MATLABParserListener extends ParseTreeListener {
 	 */
 	void exitProp(MATLABParser.PropContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MATLABParser#dotRef}.
+	 * Enter a parse tree produced by {@link MATLABParser#idRef}.
 	 * @param ctx the parse tree
 	 */
-	void enterDotRef(MATLABParser.DotRefContext ctx);
+	void enterIdRef(MATLABParser.IdRefContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link MATLABParser#dotRef}.
+	 * Exit a parse tree produced by {@link MATLABParser#idRef}.
 	 * @param ctx the parse tree
 	 */
-	void exitDotRef(MATLABParser.DotRefContext ctx);
+	void exitIdRef(MATLABParser.IdRefContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MATLABParser#statBlock}.
 	 * @param ctx the parse tree
@@ -189,6 +189,26 @@ public interface MATLABParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitCaseStat(MATLABParser.CaseStatContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link MATLABParser#scalarAssignStat}.
+	 * @param ctx the parse tree
+	 */
+	void enterScalarAssignStat(MATLABParser.ScalarAssignStatContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MATLABParser#scalarAssignStat}.
+	 * @param ctx the parse tree
+	 */
+	void exitScalarAssignStat(MATLABParser.ScalarAssignStatContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link MATLABParser#arrayAssignStat}.
+	 * @param ctx the parse tree
+	 */
+	void enterArrayAssignStat(MATLABParser.ArrayAssignStatContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MATLABParser#arrayAssignStat}.
+	 * @param ctx the parse tree
+	 */
+	void exitArrayAssignStat(MATLABParser.ArrayAssignStatContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MATLABParser#stat}.
 	 * @param ctx the parse tree

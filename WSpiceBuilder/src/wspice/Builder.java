@@ -17,7 +17,11 @@ import java.util.Vector;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 import org.apache.commons.io.FileUtils;
 
 import wspice.MATLABParser.ScriptContext;
@@ -1352,24 +1356,101 @@ public class Builder {
 	}
 
 	public static class MyListener extends MATLABParserBaseListener {
-		public MyListener(MATLABParser parser) {
+	    private final List<String> ruleNames;
+	    private final MATLABParser parser;
+	    private final ParseTree    tree;
+	    
+	    protected StringBuffer wout;
+	    
+	    protected class ExprListener extends MATLABParserBaseListener {
+	    	public ExprListener() {}
+	    	
+	        @Override
+	        public void enterEveryRule(ParserRuleContext ctx) {
+	        	String childText = "";
+	        	if (ctx.getChildCount() > 0) {
+	        		if (ctx.getChild(0) instanceof ParserRuleContext) {
+		        		ParserRuleContext child = (ParserRuleContext) ctx.getChild(0);
+		        		childText = String.format("/%s:%s", getName(child), child.getText() );
+	        		} else if (ctx.getChild(0) instanceof TerminalNodeImpl) {
+	        			TerminalNodeImpl child = (TerminalNodeImpl) ctx.getChild(0);
+	        			childText = String.format("/%s", child.getText() );
+	        		}
+	        	}
+	        	System.out.printf("%s:<%s%s>:%d\n", getName(ctx), ctx.getText(), childText, ctx.getChildCount() );
+//	        	switch (getName(ctx)) {
+//	        	case "idRef":
+//	        		wout.append(ctx.getText() );
+//	        		break;
+//	        	}
+	        	if (ctx.getChild(0) instanceof TerminalNodeImpl) {
+	        		wout.append(ctx.getText() );
+	        	}
+	        }
+	    }
+
+		public MyListener(MATLABParser parser, ParseTree tree ) {
+			this.parser = parser;
+			this.tree = tree;
+			ruleNames = Arrays.asList(parser.getRuleNames());
+			reset();
+		}
+		
+		public void reset() {
+			wout = new StringBuffer();
+		}
+		
+		public String getMathematica() {
+			return wout.toString();
+		}
+		
+		protected String getName( ParserRuleContext ctx ) {
+	    	int ruleIndex = ctx.getRuleIndex();
+	        String ruleName;
+	        if (ruleIndex >= 0 && ruleIndex < ruleNames.size()) {
+	            ruleName = ruleNames.get(ruleIndex);
+	        }
+	        else {
+	            ruleName = Integer.toString(ruleIndex);
+	        }
+	        return ruleName;
+		}
+		
+		protected void report( ParserRuleContext ctx ) {
+	        System.out.println( getName(ctx) + "  (" + ctx.getChildCount() + "," + ctx.depth() + ") " + ctx.toStringTree(ruleNames) );
+	        for (int i = 0; i < ctx.getChildCount(); i++) {
+	        	System.out.printf("%d: %s\n", i, ctx.getChild(i).toStringTree(parser) );
+	        }
+		}
+		
+		protected void translateExpr( ParserRuleContext expr ) {
+			ExprListener exprListener = new ExprListener();
+			ParseTreeWalker.DEFAULT.walk(exprListener, expr);
 		}
 
-		/**
-		 * {@inheritDoc}
-		 */
 		@Override
-		public void enterStatBlock(MATLABParser.StatBlockContext ctx) {
-			System.out.println(ctx);
+		public void enterScalarAssignStat(MATLABParser.ScalarAssignStatContext ctx) {
+			report( ctx );
+			if (ctx.getChildCount() == 3) {
+				ParserRuleContext childCtx0 = (ParserRuleContext) ctx.getChild(0);
+				String name0 = getName( childCtx0 );
+				if (name0.equals("idRef")) {
+					wout.append( childCtx0.getText() );
+					wout.append(" = ");
+				}
+				if (ctx.getChild(1).getText().equals("=")) {
+					ParserRuleContext childCtx2 = (ParserRuleContext) ctx.getChild(2);
+					String name2 = getName( childCtx2 );
+					if (name2.equals("expr")) {
+						translateExpr( childCtx2 );
+					}
+				}
+				wout.append(";");
+			}
+			wout.append( String.format("  /* %s */", ctx.toStringTree(ruleNames) ));
+			wout.append('\n');
 		}
 
-		/**
-		 * {@inheritDoc}
-		 */
-		@Override
-		public void exitStatBlock(MATLABParser.StatBlockContext ctx) {
-			System.out.println(ctx);
-		}
 	}
 
 	public static boolean parser(String str) {
@@ -1383,10 +1464,11 @@ public class Builder {
 //			System.out.println(t.toString() + " : " + tokenNames[t.getType()] );
 //		}
 		ScriptContext tree = parser.script(); // parse a compilationUnit
-		//System.out.println(tree.toStringTree(parser));
-		System.out.println( TreeUtils.printTree(tree, parser) );
-		MyListener extractor = new MyListener(parser);
-
+		System.out.println(tree.toStringTree(parser));
+		//System.out.println( TreeUtils.printTree(tree, parser) );
+		MyListener listener = new MyListener(parser, tree);
+		ParseTreeWalker.DEFAULT.walk(listener, tree);
+		System.out.println( listener.getMathematica() );
 		return true;
 	}
 

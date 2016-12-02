@@ -174,13 +174,13 @@ public class MATLABParserBaseListener implements MATLABParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterDotRef(MATLABParser.DotRefContext ctx) { }
+	@Override public void enterIdRef(MATLABParser.IdRefContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitDotRef(MATLABParser.DotRefContext ctx) { }
+	@Override public void exitIdRef(MATLABParser.IdRefContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -229,6 +229,30 @@ public class MATLABParserBaseListener implements MATLABParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitCaseStat(MATLABParser.CaseStatContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterScalarAssignStat(MATLABParser.ScalarAssignStatContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitScalarAssignStat(MATLABParser.ScalarAssignStatContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterArrayAssignStat(MATLABParser.ArrayAssignStatContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitArrayAssignStat(MATLABParser.ArrayAssignStatContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

@@ -69,7 +69,7 @@ prop
     : ID (EQUALS expr)? endStat
     ;
 
-dotRef
+idRef
     : ID (DOT ID)*
     ;
 
@@ -94,10 +94,18 @@ caseStat
       (OTHERWISE endStat statBlock*)?
       END
     ;
+    
+scalarAssignStat
+    : idRef EQUALS expr
+    ;    
 
+arrayAssignStat
+    : idRef arrayRef EQUALS expr
+    ;
+    
 stat
-    : dotRef EQUALS expr
-    | dotRef arrayRef EQUALS expr
+    : scalarAssignStat
+    | arrayAssignStat
     | ifStat
     | whileStat
     | caseStat
@@ -134,7 +142,7 @@ expr
     | expr VECOR expr
     | expr SCALAND expr
     | expr SCALOR expr
-    | dotRef
+    | idRef
     | INT | FLOAT | SCI  
     | STRING
     | arrayExpr
