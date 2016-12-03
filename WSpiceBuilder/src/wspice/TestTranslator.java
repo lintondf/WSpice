@@ -2,6 +2,7 @@ package wspice;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -60,7 +61,10 @@ public class TestTranslator {
 			preamble = new Vector<String>();
 			cases = new Vector<Case>();
 			blockLevel = 0;
+			variables = new HashSet<String>();
 		}
+		
+		HashSet<String>  variables;
 		
 		String name;
 		int  blockLevel;
@@ -152,11 +156,13 @@ public class TestTranslator {
 				this.forStatement = new Vector<String>();
 				this.forEnds = false;
 				this.subcases = new Vector<Subcase>();
+				this.cleanup = new Vector<String>();
 			}
 			String title;
 			Vector<String>  forStatement;
 			boolean         forEnds;
 			Vector<Subcase> subcases;
+			Vector<String>  cleanup;
 			
 			public String reportEmbedded() {
 				StringBuffer sb = new StringBuffer();
@@ -184,6 +190,14 @@ public class TestTranslator {
 				}
 				for (Subcase s : subcases ) {
 					sb.append( s );
+				}
+				if (!cleanup.isEmpty()) {
+					sb.append("   cleanup:\n");
+					for (String s : cleanup ) {
+						sb.append("      ");
+						sb.append(s);
+						sb.append('\n');					
+					}
 				}
 				return sb.toString();
 			}
@@ -244,7 +258,11 @@ public class TestTranslator {
 	protected ParseState parseTestCase() {
 		System.out.println(line);
 		while (! (line.startsWith("tutils_tcase") || line.startsWith("for")) ) {
-			module.preamble.add( "P2:"+line );
+			if (module.cases.isEmpty()) {
+				module.preamble.add( "P2:"+line );
+			} else {
+				module.cases.lastElement().cleanup.add( "C0:"+line );
+			}
 			line = nextLine();
 			if (line == null) return ParseState.ERROR;
 		}

@@ -1352,12 +1352,32 @@ public class Builder {
 		}
 	}
 	
-	public static String translateMatlabBlock( List<String> block, String prefix) {
+	public static int countOccurrences(String haystack, char needle)
+	{
+	    int count = 0;
+	    for (int i=0; i < haystack.length(); i++)
+	    {
+	        if (haystack.charAt(i) == needle)
+	        {
+	             count++;
+	        }
+	    }
+	    return count;
+	}
+	
+	
+	public static String translateMatlabBlock( HashSet<String> variables, List<String> block, String prefix) {
 		StringBuffer sb = new StringBuffer();
 		int lineNumber = 1;
 		for (String s : block ) {
 			if (s.charAt(2) == ':')
 				s = s.substring(3);
+			int quotes = countOccurrences( s, '\'' );
+			if (quotes == 1) {
+				s = s.replace('\'', '@');
+			} else if ((quotes %2) == 1) { // more than 1 odd number of single quotes
+				System.err.println("Fancy Transpose: " + s );
+			}
 			sb.append(s); sb.append("\n");
 			System.out.printf("%5d : %s\n", lineNumber++, s );
 		}
@@ -1368,7 +1388,7 @@ public class Builder {
 		ScriptContext tree = parser.script(); // parse a compilationUnit
 		//System.out.println(tree.toStringTree(parser));
 		//System.out.println( TreeUtils.printTree(tree, parser) );
-		MatlabListener listener = new MatlabListener(parser, tree, prefix);
+		MatlabListener listener = new MatlabListener(variables, parser, tree, prefix);
 		ParseTreeWalker.DEFAULT.walk(listener, tree);
 		String wout = listener.getMathematica();
 		return wout;
@@ -1379,7 +1399,7 @@ public class Builder {
 		MatlabListener.functionRemap.put("delete", "DeleteFile");
 		MatlabListener.functionRemap.put("max", "Max");
 		MatlabListener.functionRemap.put("min", "Min");			
-		MatlabListener.functionRemap.put( "zeros", "Zeros"); // Zeros[m, n] := ConstantArray[0,{m_, n_}];
+		MatlabListener.functionRemap.put("zeros", "Zeros"); // Zeros[m, n] := ConstantArray[0,{m_, n_}];
 
 		try {
 			log = new PrintStream(new FileOutputStream(new File("log.txt")));
@@ -1391,7 +1411,7 @@ public class Builder {
 				TestTranslator translator = new TestTranslator(
 						"C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice/ckcov_matlab.m");
 				if (translator.translate()) {
-					String wout = translateMatlabBlock(translator.module.preamble, "    ");
+					String wout = translateMatlabBlock(translator.module.variables, translator.module.preamble, "    ");
 					System.out.println(wout);
 					return;
 				}

@@ -6,9 +6,11 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
+import wspice.MATLABParser.ArrayAssignStatContext;
 import wspice.MATLABParser.ExprContext;
 
 public class MatlabListener extends MATLABParserBaseListener {
@@ -49,7 +51,8 @@ public class MatlabListener extends MATLABParserBaseListener {
 //	        }
 //	    }
 
-		public MatlabListener(MATLABParser parser, ParseTree tree, String prefix ) {
+		public MatlabListener(HashSet<String>  variables, MATLABParser parser, ParseTree tree, String prefix ) {
+			this.variables = variables;
 			this.parser = parser;
 			this.tree = tree;
 			this.prefix = prefix;
@@ -71,7 +74,7 @@ public class MatlabListener extends MATLABParserBaseListener {
 			return variables;
 		}
 
-		protected String getName( ParserRuleContext ctx ) {
+		protected String getName( RuleContext ctx ) {
 	    	int ruleIndex = ctx.getRuleIndex();
 	        String ruleName;
 	        if (ruleIndex >= 0 && ruleIndex < ruleNames.size()) {
@@ -189,7 +192,11 @@ public class MatlabListener extends MATLABParserBaseListener {
 	        		if (contents.charAt(0) == '\'') {
 	        			contents = String.format("\"%s\"", contents.substring(1, contents.length()-1) );
 	        		}
-	        		wout.append(contents);
+	        		if (contents.equals("@")) { // rewritten single quote transpose
+	        			wout.append(" // Transpose");
+	        		} else {
+	        			wout.append(contents);
+	        		}
 	        	} else if (child instanceof ParserRuleContext) {
 	        		ParserRuleContext childCtx = (ParserRuleContext) child;
 	        		switch (getName(childCtx)) {
@@ -246,8 +253,11 @@ public class MatlabListener extends MATLABParserBaseListener {
 
 		@Override
 		public void enterExpr(ExprContext ctx) {
+//			System.out.println( "enterExpr " + ctx.depth() + ", " + ctx.getChildCount() +
+//					" : " + getName(ctx.parent) +
+//					" -> " + ctx.toStringTree(ruleNames) );					
 			// script/statBlock/stat/expr for standalone function invocations
-			if (ctx.depth() == 4) {
+			if (ctx.depth() == 4 && getName(ctx.parent).equals("stat")) {
 				if (ctx.getChildCount() == 1) {
 					ParserRuleContext childCtx0 = (ParserRuleContext) ctx.getChild(0);
 					if (isChildRule( ctx, 0, "idRef")) {
@@ -268,6 +278,26 @@ public class MatlabListener extends MATLABParserBaseListener {
 					System.err.println( "enterExpr too many children " + ctx.depth() + ", " + ctx.getChildCount() + " -> " + ctx.toStringTree(ruleNames) );					
 				}
 			}
+		}
+
+
+		@Override
+		public void enterArrayAssignStat(ArrayAssignStatContext ctx) {
+			System.out.println( "enterArrayAssignStat " + ctx.depth() + ", " + ctx.getChildCount() + " -> " + ctx.toStringTree(ruleNames) );					
+			wout.append(prefix);
+			if (ctx.getChildCount() == 3 && 
+				isChildRule(ctx, 0, "arrayRef") &&
+				isChildTerminal(ctx, 1, "=") &&
+				isChildRule(ctx, 2, "expr")) {
+				
+				ParserRuleContext childCtx0 = (ParserRuleContext) ctx.getChild(0);
+				translateArrayRef( childCtx0 );
+				wout.append(" = ");
+				ParserRuleContext childCtx2 = (ParserRuleContext) ctx.getChild(2);
+				translateExpr( childCtx2 );
+				wout.append(";\n");
+			}
+			addParseComment(ctx);
 		}
 
 	}

@@ -128,9 +128,8 @@ cellExpr
     : LBRACE exprArrayList RBRACE
     | LBRACE RBRACE
     ;
-
+    
 expr
-//    : expr LPAREN exprList RPAREN
     : arrayRef
     | expr (TRANS|CTRANS)
     | expr (MPOW|POW) expr

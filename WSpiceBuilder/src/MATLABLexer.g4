@@ -88,9 +88,9 @@ NOT : '~' ;
 
 COLON : ':' ;
 
-TRANS : '.\'' ;
+TRANS : '.@' ;
 
-CTRANS : '\'' ;
+CTRANS : '@' ;
 
 // General rules
 NL  : '\r'?'\n' ;
