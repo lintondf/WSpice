@@ -251,10 +251,10 @@ public class TestTranslator {
 		if (line.startsWith("for")) {
 			System.out.println(line);
 			Vector<String> forStatement = new Vector<String>();
-			forStatement.add(line);
+			forStatement.add("F1:"+line);
 			line = nextLine();
 			while (line != null && ! line.startsWith("tutils_tcase")) {
-				forStatement.add(line);
+				forStatement.add("F2:"+line);
 				line = nextLine();				
 			}
 			Module.Case testCase = module.new Case( line );
@@ -306,11 +306,11 @@ public class TestTranslator {
 			} else {
 				if (line.startsWith("if")) {
 					while (line != null && !line.equals("end")) {
-						subcase.setup.add(line);
+						subcase.setup.add("S1:"+line);
 						line = nextLine();
 					}
 				} 
-				subcase.setup.add( line );
+				subcase.setup.add( "S2:"+line );
 				line = nextLine();
 			}
 		}
@@ -321,7 +321,7 @@ public class TestTranslator {
 			while (line != null && line.equals("try")) {
 				line = nextLine();
 				while (! line.equals("catch")) {
-					subcase.steps.add(line);
+					subcase.steps.add("S3:"+line);
 					line = nextLine();
 				}
 				line = nextLine();
@@ -337,12 +337,12 @@ public class TestTranslator {
 						break;
 					if (line.startsWith("if")) {
 						while (line != null && !line.equals("end")) {
-							subcase.checks.add("S1:"+line);
+							subcase.checks.add("S4:"+line);
 							line = nextLine();
 						}
 						continue;
 					}
-					subcase.checks.add("S2:"+module.blockLevel+":"+line);
+					subcase.checks.add("S5:"+module.blockLevel+":"+line);
 					if (rit.hasNext()) {
 						line = nextLine();
 					} else {
@@ -371,7 +371,7 @@ public class TestTranslator {
 						emptySubcase = true;
 						break;
 					}
-					subcase.checks.add("S3:"+line);
+					subcase.checks.add("S6:"+line);
 					if (rit.hasNext()) {
 						line = nextLine();
 					} else {
