@@ -1351,28 +1351,36 @@ public class Builder {
 			e.printStackTrace();
 		}
 	}
-
-	public static String parser(String str, String prefix) {
-		ANTLRInputStream input = new ANTLRInputStream(str);
+	
+	public static String translateMatlabBlock( List<String> block, String prefix) {
+		StringBuffer sb = new StringBuffer();
+		int lineNumber = 1;
+		for (String s : block ) {
+			if (s.charAt(2) == ':')
+				s = s.substring(3);
+			sb.append(s); sb.append("\n");
+			System.out.printf("%5d : %s\n", lineNumber++, s );
+		}
+		ANTLRInputStream input = new ANTLRInputStream(sb.toString());
 		MATLABLexer lexer = new MATLABLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		MATLABParser parser = new MATLABParser(tokens);
-//		tokens.fill();
-//		String[] tokenNames = parser.getTokenNames();
-//		for (Token t : tokens.getTokens()) {
-//			System.out.println(t.toString() + " : " + tokenNames[t.getType()] );
-//		}
 		ScriptContext tree = parser.script(); // parse a compilationUnit
-		System.out.println(tree.toStringTree(parser));
+		//System.out.println(tree.toStringTree(parser));
 		//System.out.println( TreeUtils.printTree(tree, parser) );
 		MatlabListener listener = new MatlabListener(parser, tree, prefix);
 		ParseTreeWalker.DEFAULT.walk(listener, tree);
-		return listener.getMathematica();
+		String wout = listener.getMathematica();
+		return wout;
 	}
 
 	public static void main(String[] args) {
-		// if (parser("error_tag = ( numel(regexp( lasterr, 'BADENDPOINTS' ) )
-		// ~= 0);")) return;
+		
+		MatlabListener.functionRemap.put("delete", "DeleteFile");
+		MatlabListener.functionRemap.put("max", "Max");
+		MatlabListener.functionRemap.put("min", "Min");			
+		MatlabListener.functionRemap.put( "zeros", "Zeros"); // Zeros[m, n] := ConstantArray[0,{m_, n_}];
+
 		try {
 			log = new PrintStream(new FileOutputStream(new File("log.txt")));
 			// Builder builder = new Builder();
@@ -1383,13 +1391,7 @@ public class Builder {
 				TestTranslator translator = new TestTranslator(
 						"C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice/ckcov_matlab.m");
 				if (translator.translate()) {
-					StringBuffer sb = new StringBuffer();
-					int lineNumber = 1;
-					for (String s : translator.module.preamble ) {
-						sb.append(s.substring(3)); sb.append("\n");
-						System.out.printf("%5d : %s\n", lineNumber++, s.substring(3) );
-					}
-					String wout = parser(sb.toString(), "    ");
+					String wout = translateMatlabBlock(translator.module.preamble, "    ");
 					System.out.println(wout);
 					return;
 				}

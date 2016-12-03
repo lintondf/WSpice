@@ -9,13 +9,15 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
+import wspice.MATLABParser.ExprContext;
+
 public class MatlabListener extends MATLABParserBaseListener {
 	    private final List<String> ruleNames;
 	    private final MATLABParser parser;
 	    private final ParseTree    tree;
 	    private final String       prefix;
 	    private final HashSet<String>  variables;
-		private final HashMap<String, String>  functionRemap;
+		public static HashMap<String, String>  functionRemap = new HashMap<String, String>();
 	    
 	    protected StringBuffer wout;
 	    
@@ -53,17 +55,9 @@ public class MatlabListener extends MATLABParserBaseListener {
 			this.prefix = prefix;
 			ruleNames = Arrays.asList(parser.getRuleNames());
 			variables = new HashSet<String>();
-			functionRemap = new HashMap<String, String>();
-			remapping();
 			reset();
 		}
 		
-		
-		private void remapping() {
-			functionRemap.put( "zeros", "Zeros"); // Zeros[m, n] := ConstantArray[0,{m_, n_}];
-			functionRemap.put("max", "Max");
-			functionRemap.put("min", "Min");			
-		}
 		
 		public void reset() {
 			wout = new StringBuffer();
@@ -139,7 +133,6 @@ public class MatlabListener extends MATLABParserBaseListener {
 				translateExprArrayList( (ParserRuleContext) expr.getChild(1) );
 				wout.append("}");
 			}
-			System.out.println();
 		}
 		
 		protected boolean isChildRule( ParserRuleContext expr, int iChild, String rule ) {
@@ -219,6 +212,12 @@ public class MatlabListener extends MATLABParserBaseListener {
 	        	}
 	        }			
 		}
+		
+		protected void addParseComment(ParserRuleContext ctx ) {
+			wout.append( String.format("%s  (* %s *)", prefix, ctx.toStringTree(ruleNames) ));
+			wout.append('\n');
+			wout.append('\n');
+		}
 
 		@Override
 		public void enterScalarAssignStat(MATLABParser.ScalarAssignStatContext ctx) {
@@ -239,11 +238,36 @@ public class MatlabListener extends MATLABParserBaseListener {
 						translateExpr( childCtx2 );
 					}
 				}
-				wout.append(";");
+				wout.append(";\n");
 			}
-			wout.append( String.format("\n%s  (* %s *)", prefix, ctx.toStringTree(ruleNames) ));
-			wout.append('\n');
-			wout.append('\n');
+			addParseComment(ctx);
+		}
+
+
+		@Override
+		public void enterExpr(ExprContext ctx) {
+			// script/statBlock/stat/expr for standalone function invocations
+			if (ctx.depth() == 4) {
+				if (ctx.getChildCount() == 1) {
+					ParserRuleContext childCtx0 = (ParserRuleContext) ctx.getChild(0);
+					if (isChildRule( ctx, 0, "idRef")) {
+						wout.append(prefix);
+						wout.append( childCtx0.getText() );
+						wout.append( "[];\n");
+						addParseComment(ctx);
+					} else if (isChildRule( ctx, 0, "arrayRef")) {
+						//System.out.println( "expr[4]/arrayRef "+ childCtx0.depth() + ", " + childCtx0.getChildCount() + " -> " + childCtx0.toStringTree(ruleNames) );
+						wout.append(prefix);
+						translateArrayRef( childCtx0 );
+						wout.append( ";\n");
+						addParseComment(ctx);
+					} else {
+						System.err.println( "enterExpr unknown rule " + ctx.depth() + ", " + ctx.getChildCount() + " -> " + ctx.toStringTree(ruleNames) );
+					}
+				} else {
+					System.err.println( "enterExpr too many children " + ctx.depth() + ", " + ctx.getChildCount() + " -> " + ctx.toStringTree(ruleNames) );					
+				}
+			}
 		}
 
 	}
