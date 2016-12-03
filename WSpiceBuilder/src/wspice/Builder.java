@@ -1397,9 +1397,11 @@ public class Builder {
 	public static void main(String[] args) {
 		
 		MatlabListener.functionRemap.put("delete", "DeleteFile");
+		MatlabListener.functionRemap.put("false", "False");
 		MatlabListener.functionRemap.put("max", "Max");
 		MatlabListener.functionRemap.put("min", "Min");			
-		MatlabListener.functionRemap.put("zeros", "Zeros"); // Zeros[m, n] := ConstantArray[0,{m_, n_}];
+		MatlabListener.functionRemap.put("true", "True");
+		MatlabListener.functionRemap.put("wstzeros", "wsuZeros"); // wsuZeros[m_, n_] := ConstantArray[0, {m, n}];
 
 		try {
 			log = new PrintStream(new FileOutputStream(new File("log.txt")));
@@ -1409,7 +1411,10 @@ public class Builder {
 
 			if (args.length == 0) {
 				TestTranslator translator = new TestTranslator(
-						"C:/Users/NOOK/Google Drive/cspice/tmice/src/tmice/ckcov_matlab.m");
+						((isMacOS) ? "/Users/lintondf/Google Drive/cspice/tmice/src/tmice/"
+								: "C:\\Users\\Barbara\\Google Drive\\cspice\\tmice\\src\\tmice//")
+						+ "ckcov_matlab.m");
+				
 				if (translator.translate()) {
 					String wout = translateMatlabBlock(translator.module.variables, translator.module.preamble, "    ");
 					System.out.println(wout);

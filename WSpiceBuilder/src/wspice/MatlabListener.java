@@ -107,6 +107,7 @@ public class MatlabListener extends MATLABParserBaseListener {
 		}
 		protected void translateExprArrayList( ParserRuleContext expr ) {
 //			showChildren( "ExprArrayList: ", expr );
+			//wout.append("{");
 			for (int i = 0; i < expr.getChildCount(); i++) {
 				ParseTree child = expr.getChild(i);
 //				System.out.printf("%d:%s:%s\n", i, child.getClass(), child.getText() );
@@ -125,6 +126,7 @@ public class MatlabListener extends MATLABParserBaseListener {
 					}
 				}
 			}
+			//wout.append("}");
 		}
 		
 		protected void translateArrayExpr( ParserRuleContext expr ) {
@@ -132,9 +134,9 @@ public class MatlabListener extends MATLABParserBaseListener {
 				isChildTerminal(expr, 0, "[") &&
 				isChildRule( expr, 1, "exprArrayList") &&
 				isChildTerminal(expr, 2, "]") ) {
-				wout.append("{");
+				wout.append("ArrayFlatten[{");
 				translateExprArrayList( (ParserRuleContext) expr.getChild(1) );
-				wout.append("}");
+				wout.append("}]");
 			}
 		}
 		
@@ -164,6 +166,7 @@ public class MatlabListener extends MATLABParserBaseListener {
 				isChildTerminal( expr, 3, ")" ) ) {
 				//showChildren( "ArrayRef: ", expr );
 				String symbol = expr.getChild(0).getText();
+				symbol = rewriteSymbol(symbol);
 				//System.out.println( symbol + " ? " + variables.contains(symbol) );
 				if (variables.contains(symbol)) { // array reference
 					wout.append( symbol );
@@ -191,10 +194,17 @@ public class MatlabListener extends MATLABParserBaseListener {
 	        		String contents = child.getText();
 	        		if (contents.charAt(0) == '\'') {
 	        			contents = String.format("\"%s\"", contents.substring(1, contents.length()-1) );
-	        		}
-	        		if (contents.equals("@")) { // rewritten single quote transpose
+	        			wout.append(contents);
+	        		} else if (contents.equals("@")) { // rewritten single quote transpose
 	        			wout.append(" // Transpose");
+	        		} else if (contents.equalsIgnoreCase(":")) {  // range generator
+	        			wout.append(";;");
 	        		} else {
+	        			if (functionRemap.containsKey(contents)) {
+	        				contents = functionRemap.get(contents);
+	        			} else {
+	        				contents = rewriteSymbol( contents );
+	        			}
 	        			wout.append(contents);
 	        		}
 	        	} else if (child instanceof ParserRuleContext) {
@@ -220,6 +230,16 @@ public class MatlabListener extends MATLABParserBaseListener {
 	        }			
 		}
 		
+		private String rewriteSymbol(String symbol) {
+			if (Character.isAlphabetic( symbol.charAt(0) )) {
+				symbol = symbol.replaceAll("cspice_", " WSpice`" );
+				symbol = symbol.replaceAll("_", "");
+				symbol = "wst" + symbol;
+			}
+			return symbol;
+		}
+
+
 		protected void addParseComment(ParserRuleContext ctx ) {
 			wout.append( String.format("%s  (* %s *)", prefix, ctx.toStringTree(ruleNames) ));
 			wout.append('\n');
@@ -234,8 +254,10 @@ public class MatlabListener extends MATLABParserBaseListener {
 				ParserRuleContext childCtx0 = (ParserRuleContext) ctx.getChild(0);
 				String name0 = getName( childCtx0 );
 				if (name0.equals("idRef")) {
-					wout.append( childCtx0.getText() );
-					variables.add( childCtx0.getText() );
+					String symbol = childCtx0.getText();
+					symbol = rewriteSymbol(symbol);
+					wout.append( symbol );
+					variables.add( symbol );
 					wout.append(" = ");
 				}
 				if (ctx.getChild(1).getText().equals("=")) {
