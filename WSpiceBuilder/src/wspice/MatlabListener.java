@@ -283,7 +283,7 @@ public class MatlabListener extends MATLABParserBaseListener {
 
 		@Override
 		public void enterArrayAssignStat(ArrayAssignStatContext ctx) {
-			System.out.println( "enterArrayAssignStat " + ctx.depth() + ", " + ctx.getChildCount() + " -> " + ctx.toStringTree(ruleNames) );					
+			//System.out.println( "enterArrayAssignStat " + ctx.depth() + ", " + ctx.getChildCount() + " -> " + ctx.toStringTree(ruleNames) );					
 			wout.append(prefix);
 			if (ctx.getChildCount() == 3 && 
 				isChildRule(ctx, 0, "arrayRef") &&
