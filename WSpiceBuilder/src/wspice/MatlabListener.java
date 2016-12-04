@@ -105,9 +105,12 @@ public class MatlabListener extends MATLABParserBaseListener {
 			}
 			System.out.println();
 		}
-		protected void translateExprArrayList( ParserRuleContext expr ) {
+		protected void translateExprArrayList( ParserRuleContext expr, boolean forceBraces ) {
 //			showChildren( "ExprArrayList: ", expr );
-			//wout.append("{");
+			boolean isArrayExpr = forceBraces || !(getName(expr.getParent()).equals("arrayRef"));
+			//System.out.println( "EAL: " +isArrayExpr + " "+ expr.depth() + " " + getName(expr.getParent()) + " " + expr.toStringTree(ruleNames));
+			if (isArrayExpr) 
+				wout.append("{");
 			for (int i = 0; i < expr.getChildCount(); i++) {
 				ParseTree child = expr.getChild(i);
 //				System.out.printf("%d:%s:%s\n", i, child.getClass(), child.getText() );
@@ -121,22 +124,29 @@ public class MatlabListener extends MATLABParserBaseListener {
 						if (child.getText().equals(",")) {
 							wout.append(", ");
 						} else {
-							wout.append("}, {");
+							wout.append(", "); // ("}, {");
 						}
 					}
 				}
 			}
-			//wout.append("}");
+			if (isArrayExpr) 
+				wout.append("}");
 		}
 		
 		protected void translateArrayExpr( ParserRuleContext expr ) {
+			//System.out.println( "EA: " + expr.depth() + " " + getName(expr.getParent()) + " " + expr.toStringTree(ruleNames));
 			if (expr.getChildCount() == 3 &&
 				isChildTerminal(expr, 0, "[") &&
 				isChildRule( expr, 1, "exprArrayList") &&
 				isChildTerminal(expr, 2, "]") ) {
-				wout.append("ArrayFlatten[{");
-				translateExprArrayList( (ParserRuleContext) expr.getChild(1) );
-				wout.append("}]");
+				
+				if (expr.depth() == 6) {
+					wout.append("ArrayFlatten[");
+					translateExprArrayList( (ParserRuleContext) expr.getChild(1), true );
+					wout.append(", 1]");
+				} else {
+					translateExprArrayList( (ParserRuleContext) expr.getChild(1), false );					
+				}
 			}
 		}
 		
@@ -171,7 +181,7 @@ public class MatlabListener extends MATLABParserBaseListener {
 				if (variables.contains(symbol)) { // array reference
 					wout.append( symbol );
 					wout.append("[[");
-					translateExprArrayList( (ParserRuleContext)expr.getChild(2) );
+					translateExprArrayList( (ParserRuleContext)expr.getChild(2), false );
 					wout.append("]]");
 				} else {  // function invocation
 					if (functionRemap.containsKey(symbol)) {
@@ -179,7 +189,7 @@ public class MatlabListener extends MATLABParserBaseListener {
 					}
 					wout.append( symbol );
 					wout.append("[");
-					translateExprArrayList( (ParserRuleContext)expr.getChild(2) );
+					translateExprArrayList( (ParserRuleContext)expr.getChild(2), false );
 					wout.append("]");
 				}
 			}
@@ -230,7 +240,7 @@ public class MatlabListener extends MATLABParserBaseListener {
 	        }			
 		}
 		
-		private String rewriteSymbol(String symbol) {
+		public static String rewriteSymbol(String symbol) {
 			if (Character.isAlphabetic( symbol.charAt(0) )) {
 				symbol = symbol.replaceAll("cspice_", " WSpice`" );
 				symbol = symbol.replaceAll("_", "");

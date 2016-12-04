@@ -1396,10 +1396,10 @@ public class Builder {
 
 	public static void main(String[] args) {
 		
-		MatlabListener.functionRemap.put("delete", "DeleteFile");
+		MatlabListener.functionRemap.put("wstdelete", "DeleteFile");
 		MatlabListener.functionRemap.put("false", "False");
-		MatlabListener.functionRemap.put("max", "Max");
-		MatlabListener.functionRemap.put("min", "Min");			
+		MatlabListener.functionRemap.put("wstmax", "Max");
+		MatlabListener.functionRemap.put("wstmin", "Min");			
 		MatlabListener.functionRemap.put("true", "True");
 		MatlabListener.functionRemap.put("wstzeros", "wsuZeros"); // wsuZeros[m_, n_] := ConstantArray[0, {m, n}];
 
@@ -1410,14 +1410,19 @@ public class Builder {
 			// builder.translate();
 
 			if (args.length == 0) {
-				TestTranslator translator = new TestTranslator(
+				TranslateMiceTest translator = new TranslateMiceTest(
 						((isMacOS) ? "/Users/lintondf/Google Drive/cspice/tmice/src/tmice/"
 								: "C:\\Users\\Barbara\\Google Drive\\cspice\\tmice\\src\\tmice//")
 						+ "ckcov_matlab.m");
 				
 				if (translator.translate()) {
+					PrintStream tests = new PrintStream(new FileOutputStream(new File("wspiceTests.wl")));
+					tests.println("wsuZeros[m_, n_] := ConstantArray[0, {m, n}];");
+					tests.printf("%s = Module[{},\n", MatlabListener.rewriteSymbol(translator.module.name) );
 					String wout = translateMatlabBlock(translator.module.variables, translator.module.preamble, "    ");
-					System.out.println(wout);
+					tests.print(wout);
+					tests.println("];");
+					tests.close();
 					return;
 				}
 			} else {
@@ -1466,7 +1471,7 @@ public class Builder {
 				// forExcludes.add("wind_matlab.m");
 				forExcludes.add("xfmsta_matlab.m"); // TODO end in preamble
 
-				Vector<TestTranslator.Module> modules = new Vector<TestTranslator.Module>();
+				Vector<TranslateMiceTest.Module> modules = new Vector<TranslateMiceTest.Module>();
 				for (File f : list) {
 					System.out.println(f);
 					// exclude master test runner
@@ -1476,12 +1481,12 @@ public class Builder {
 					// these
 					if (forExcludes.contains(f.getName()))
 						continue;
-					TestTranslator translator = new TestTranslator(f.getAbsolutePath());
+					TranslateMiceTest translator = new TranslateMiceTest(f.getAbsolutePath());
 					if (!translator.translate())
 						break;
 					modules.add(translator.module);
 				}
-				for (TestTranslator.Module module : modules) {
+				for (TranslateMiceTest.Module module : modules) {
 					String report = module.reportEmbedded();
 					if (report != null && !report.isEmpty())
 						System.out.println(module.name + " : " + report);

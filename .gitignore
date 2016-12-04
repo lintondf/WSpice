@@ -1,4 +1,5 @@
 WSpice/Debug/**
+WSpiceBuilder/wspiceTests.wl
 WSpiceBuilder/bin/**
 log.txt
 wspice.wl

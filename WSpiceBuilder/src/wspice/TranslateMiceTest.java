@@ -10,7 +10,7 @@ import java.util.Vector;
 
 import org.apache.commons.io.FileUtils;
 
-public class TestTranslator {
+public class TranslateMiceTest {
 	
 	protected File testSource;
 	protected List<String> reduced;
@@ -42,7 +42,7 @@ public class TestTranslator {
 		return line;
 	}
 	
-	TestTranslator( String path ) {
+	TranslateMiceTest( String path ) {
 		testSource = new File(path);
 	}
 	
