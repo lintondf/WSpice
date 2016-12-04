@@ -1382,7 +1382,7 @@ public class Builder {
 			if (quotes == 1) {
 				s = s.replace('\'', '@');
 			} else if ((quotes %2) == 1) { // more than 1 odd number of single quotes
-				System.err.println("Fancy Transpose: " + s );
+				System.err.println("Fancy Transpose: " + s);
 			}
 			sb.append(s); sb.append("\n");
 			System.out.printf("%5d : %s\n", lineNumber++, s );
@@ -1418,7 +1418,7 @@ public class Builder {
 			if (args.length == 0) {
 				TranslateMiceTest translator = new TranslateMiceTest(
 						((isMacOS) ? "/Users/lintondf/Google Drive/cspice/tmice/src/tmice/"
-								: "C:\\Users\\Barbara\\Google Drive\\cspice\\tmice\\src\\tmice//")
+								: "C:\\Users\\NOOK\\Google Drive\\cspice\\tmice\\src\\tmice//")
 						+ "ckcov_matlab.m");
 				
 				if (translator.translate()) {
