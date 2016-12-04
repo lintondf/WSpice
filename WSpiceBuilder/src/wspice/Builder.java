@@ -23,6 +23,7 @@ import org.apache.commons.io.FileUtils;
 
 import wspice.MATLABParser.ScriptContext;
 import wspice.MATLABParser.StatBlockContext;
+import wspice.TranslateMiceTest.Module;
 
 public class Builder {
 
@@ -1366,7 +1367,12 @@ public class Builder {
 	}
 	
 	
-	public static String translateMatlabBlock( HashSet<String> variables, List<String> block, String prefix) {
+	protected static String indentString( int indent ) {
+		return "                     ".substring(0, indent);
+	}
+	
+	public static String translateMatlabBlock( HashSet<String> variables, List<String> block, int indent) {
+		String prefix = indentString(indent);
 		StringBuffer sb = new StringBuffer();
 		int lineNumber = 1;
 		for (String s : block ) {
@@ -1416,11 +1422,30 @@ public class Builder {
 						+ "ckcov_matlab.m");
 				
 				if (translator.translate()) {
+					int indent = 4;
+					String preamble = translateMatlabBlock(translator.module.variables, translator.module.preamble, indent);
+					indent += 2;
+					StringBuffer caseTranslations = new StringBuffer();
+					for (Module.Case testCase : translator.module.cases) {
+						caseTranslations.append( String.format("%sModule[{}, (* %s *)\n", indentString(indent), testCase.title) );
+						String setup = translateMatlabBlock(translator.module.variables, testCase.forStatement, indent);
+						caseTranslations.append(setup);
+						indent += 2;
+						for (Module.Subcase subCase : testCase.subcases) {
+							caseTranslations.append( String.format("%s(* subcase *)\n", indentString(indent) ));														
+						}
+						indent -= 2;
+						if (testCase.forEnds) {
+							caseTranslations.append( String.format("%s] (* For *)\n", indentString(indent) ));							
+						}
+						caseTranslations.append( String.format("%s] (* Module %s *)\n\n", indentString(indent), testCase.title ));							
+					}
+					indent -= 2;
 					PrintStream tests = new PrintStream(new FileOutputStream(new File("wspiceTests.wl")));
 					tests.println("wsuZeros[m_, n_] := ConstantArray[0, {m, n}];");
 					tests.printf("%s = Module[{},\n", MatlabListener.rewriteSymbol(translator.module.name) );
-					String wout = translateMatlabBlock(translator.module.variables, translator.module.preamble, "    ");
-					tests.print(wout);
+					tests.print(preamble);
+					tests.print(caseTranslations.toString());
 					tests.println("];");
 					tests.close();
 					return;
