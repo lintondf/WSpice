@@ -1372,13 +1372,13 @@ public class Builder {
 		return "                     ".substring(0, indent);
 	}
 	
-	private static String translateMatlabBlock(HashSet<String> variables, String line, int indent) {
+	private static String translateMatlabBlock(Module module, String line, int indent) {
 		Vector<String> block = new Vector<String>();
 		block.add(line);
-		return translateMatlabBlock( variables, block, indent );
+		return translateMatlabBlock( module, block, indent );
 	}
 	
-	public static String translateMatlabBlock( HashSet<String> variables, List<String> block, int indent) {
+	public static String translateMatlabBlock( Module module, List<String> block, int indent) {
 		String prefix = indentString(indent);
 		StringBuffer sb = new StringBuffer();
 		int lineNumber = 1;
@@ -1402,7 +1402,7 @@ public class Builder {
 		ScriptContext tree = parser.script(); // parse a compilationUnit
 		//System.out.println(tree.toStringTree(parser));
 		//System.out.println( TreeUtils.printTree(tree, parser) );
-		MatlabListener listener = new MatlabListener(variables, parser, tree, prefix);
+		MatlabListener listener = new MatlabListener(module, parser, tree, prefix);
 		ParseTreeWalker.DEFAULT.walk(listener, tree);
 		String wout = listener.getMathematica();
 		return wout;
@@ -1435,12 +1435,13 @@ public class Builder {
 
 	public static void main(String[] args) {
 		
-		MatlabListener.functionRemap.put("wstdelete", "DeleteFile");
+		MatlabListener.functionRemap.put("delete", "DeleteFile");
 		MatlabListener.functionRemap.put("false", "False");
-		MatlabListener.functionRemap.put("wstmax", "Max");
-		MatlabListener.functionRemap.put("wstmin", "Min");			
+		MatlabListener.functionRemap.put("max", "Max");
+		MatlabListener.functionRemap.put("min", "Min");			
 		MatlabListener.functionRemap.put("true", "True");
-		MatlabListener.functionRemap.put("wstzeros", "wsuZeros"); // wsuZeros[m_, n_] := ConstantArray[0, {m, n}];
+		MatlabListener.functionRemap.put("unique", "DeleteDuplicates");
+		MatlabListener.functionRemap.put("zeros", "wsuZeros"); // wsuZeros[m_, n_] := ConstantArray[0, {m, n}];
 
 		try {
 			log = new PrintStream(new FileOutputStream(new File("log.txt")));
@@ -1457,17 +1458,17 @@ public class Builder {
 				if (translator.translate()) {
 					Stack<String>  forEnds = new Stack<String>();
 					int indent = 4;
-					String preamble = translateMatlabBlock(translator.module.variables, translator.module.preamble, indent);
+					String preamble = translateMatlabBlock(translator.module, translator.module.preamble, indent);
 					indent += 2;
 					StringBuffer caseTranslations = new StringBuffer();
 					for (Module.Case testCase : translator.module.cases) {
 						caseTranslations.append( String.format("%sModule[{}, (* %s *)\n", indentString(indent), testCase.title) );
-						String forBlock = translateMatlabBlock(translator.module.variables, testCase.forStatement, indent);
+						String forBlock = translateMatlabBlock(translator.module, testCase.forStatement, indent);
 						if (!forBlock.trim().isEmpty()) {
 							String[] forPieces = forBlock.split("\\(\\*\\@\\*\\)");
-							System.out.println("<"+forBlock.trim()+">");
-							System.out.println(forPieces.length);
-							System.out.printf("<%s> <%s>\n", forPieces[0], forPieces[1] );
+//							System.out.println("<"+forBlock.trim()+">");
+//							System.out.println(forPieces.length);
+//							System.out.printf("<%s> <%s>\n", forPieces[0], forPieces[1] );
 							caseTranslations.append(forPieces[0]);
 							forEnds.push(forPieces[1]);
 						}
@@ -1477,22 +1478,22 @@ public class Builder {
 							if (subCase.catcher != null) { // in try/catch
 								caseTranslations.append( String.format("%sCheckAbort[\n", indentString(indent)) );
 								indent += 2;
-								String steps = translateMatlabBlock(translator.module.variables, subCase.steps, indent);
+								String steps = translateMatlabBlock(translator.module, subCase.steps, indent);
 								caseTranslations.append(steps);
 								indent -= 2;
 								caseTranslations.append( String.format("%s,\n", indentString(indent)) );
 								indent += 2;
-								String check = translateMatlabBlock(translator.module.variables, subCase.catcher, indent);
+								String check = translateMatlabBlock(translator.module, subCase.catcher, indent);
 								caseTranslations.append(check);
 								indent -= 2;
 								caseTranslations.append( String.format("%s]; (*CatchAbort*)\n", indentString(indent)) );
 							} else {
-								String steps = translateMatlabBlock(translator.module.variables, subCase.steps, indent);
+								String steps = translateMatlabBlock(translator.module, subCase.steps, indent);
 								caseTranslations.append(steps);
 							}
-							String checks = translateMatlabBlock(translator.module.variables, subCase.checks, indent);
+							String checks = translateMatlabBlock(translator.module, subCase.checks, indent);
 							caseTranslations.append(checks);
-							String setup = translateMatlabBlock(translator.module.variables, subCase.setup, indent);
+							String setup = translateMatlabBlock(translator.module, subCase.setup, indent);
 							caseTranslations.append(setup);
 						}
 						indent -= 2;
@@ -1500,19 +1501,39 @@ public class Builder {
 							caseTranslations.append( String.format("%s(* For *) %s", indentString(indent), 
 									forEnds.pop() ));							
 						}
-						String cleanup = translateMatlabBlock(translator.module.variables, testCase.cleanup, indent);
+						String cleanup = translateMatlabBlock(translator.module, testCase.cleanup, indent);
 						caseTranslations.append(cleanup);
 						caseTranslations.append( String.format("%s] (* Module %s *)\n\n", indentString(indent), testCase.title ));							
 					}
 					indent -= 2;
 					PrintStream tests = new PrintStream(new FileOutputStream(new File("wspiceTests.wl")));
 					tests.println("wsuZeros[m_, n_] := ConstantArray[0, {m, n}];");
-					tests.printf("%s = Module[{},\n", MatlabListener.rewriteSymbol(translator.module.name) );
+					StringBuffer localVariableList = new StringBuffer();
+					boolean first = true;
+					for (String symbol : translator.module.variables) {
+						if (!first)
+							localVariableList.append(",");
+						localVariableList.append( symbol );
+						first = false;
+					}
+					
+					tests.printf("%s = Module[{%s},\n", 
+							MatlabListener.rewriteSymbol(translator.module.name), 
+							localVariableList.toString() );
 					// remove any unused FOR block markers
 					tests.print(preamble.replaceAll("\\(\\*\\@\\*\\)", "" ));
 					tests.print(caseTranslations.toString().replaceAll("\\(\\*\\@\\*\\)", "" ));
 					tests.println("];");
 					tests.close();
+					
+					System.out.println("Variables:");
+					for (String symbol : translator.module.variables) {
+						System.out.printf("  %s\n", symbol );
+					}
+					System.out.println("Functions:");
+					for (String symbol : translator.module.functions) {
+						System.out.printf("  %s\n", symbol );
+					}
 					return;
 				}
 			} else {

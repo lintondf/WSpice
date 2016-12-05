@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
@@ -13,13 +14,15 @@ import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 import wspice.MATLABParser.ArrayAssignStatContext;
 import wspice.MATLABParser.ExprContext;
 import wspice.MATLABParser.ForStatContext;
+import wspice.TranslateMiceTest.Module;
 
 public class MatlabListener extends MATLABParserBaseListener {
 	    private final List<String> ruleNames;
 	    private final MATLABParser parser;
 	    private final ParseTree    tree;
 	    private final String       prefix;
-	    private final HashSet<String>  variables;
+	    private final Set<String>  variables;
+	    private final Set<String>  functions;
 		public static HashMap<String, String>  functionRemap = new HashMap<String, String>();
 	    
 	    protected StringBuffer wout;
@@ -28,41 +31,13 @@ public class MatlabListener extends MATLABParserBaseListener {
 	    	wout.append( code );
 	    }
 	     
-//	    protected class ExprListener extends MATLABParserBaseListener {
-//	    	public ExprListener() {}
-//	    	
-//	        @Override
-//	        public void enterEveryRule(ParserRuleContext ctx) {
-//	        	StringBuffer childText = new StringBuffer();
-//	        	for (int i = 0; i < ctx.getChildCount(); i++) {
-//	        		if (ctx.getChild(i) instanceof ParserRuleContext) {
-//		        		ParserRuleContext child = (ParserRuleContext) ctx.getChild(i);
-//		        		childText.append( String.format("/%s:%s,", getName(child), child.getText() ) );
-//	        		} else if (ctx.getChild(i) instanceof TerminalNodeImpl) {
-//	        			TerminalNodeImpl child = (TerminalNodeImpl) ctx.getChild(i);
-//	        			childText.append( String.format("/%s,", child.getText() ) );
-//	        		}
-//	        	}
-//	        	System.out.printf("%s:<%s%s>:%d\n", getName(ctx), ctx.getText(), 
-//	        			childText.toString(), ctx.getChildCount() );
-////	        	switch (getName(ctx)) {
-////	        	case "idRef":
-////	        		wout.append(ctx.getText() );
-////	        		break;
-////	        	}
-//	        	if (ctx.getChild(0) instanceof TerminalNodeImpl) {
-//	        		wout.append(ctx.getText() );
-//	        	}
-//	        }
-//	    }
-
-		public MatlabListener(HashSet<String>  variables, MATLABParser parser, ParseTree tree, String prefix ) {
-			this.variables = variables;
+		public MatlabListener(Module module, MATLABParser parser, ParseTree tree, String prefix ) {
+			this.variables = module.variables;
+			this.functions = module.functions;
 			this.parser = parser;
 			this.tree = tree;
 			this.prefix = prefix;
 			ruleNames = Arrays.asList(parser.getRuleNames());
-			variables = new HashSet<String>();
 			reset();
 		}
 		
@@ -75,10 +50,6 @@ public class MatlabListener extends MATLABParserBaseListener {
 			return wout.toString();
 		}
 		
-	    public HashSet<String> getVariables() {
-			return variables;
-		}
-
 		protected String getName( RuleContext ctx ) {
 	    	int ruleIndex = ctx.getRuleIndex();
 	        String ruleName;
@@ -113,13 +84,15 @@ public class MatlabListener extends MATLABParserBaseListener {
 
 		
 		public static String rewriteSymbol(String symbol) {
-			if (Character.isAlphabetic( symbol.charAt(0) )) {
-				symbol = symbol.replaceAll("cspice_", " WSpice`" );
+			if (symbol.startsWith("cspice_")) {
+				symbol = symbol.replaceAll("cspice_", "WSpice`" );
+				return symbol;
+			} else if (Character.isAlphabetic( symbol.charAt(0) )) {
 //				symbol = symbol.replaceAll("_", "");
 //				symbol = "wst" + symbol;
-				boolean upcaseNext = true;
+				boolean upcaseNext = false;
 				StringBuffer out = new StringBuffer();
-				out.append("wst");
+				//out.append("wst");
 				for (int i = 0; i < symbol.length(); i++) {
 					char ch = symbol.charAt(i);
 					if (Character.isLetter(ch) || Character.isDigit(ch)) {
@@ -128,7 +101,8 @@ public class MatlabListener extends MATLABParserBaseListener {
 						upcaseNext = false;
 						out.append(ch);
 					} else {
-						upcaseNext = true;
+						out.append('$');
+						//upcaseNext = true;
 					}
 				}
 				symbol = out.toString();
@@ -232,6 +206,7 @@ public class MatlabListener extends MATLABParserBaseListener {
 					if (functionRemap.containsKey(symbol)) {
 						symbol = functionRemap.get(symbol);
 					}
+					functions.add(symbol);
 					appendCode( symbol );
 					appendCode("[");
 					translateExprArrayList( (ParserRuleContext)expr.getChild(2), false );
@@ -255,7 +230,38 @@ public class MatlabListener extends MATLABParserBaseListener {
 	        		} else if (contents.equals("@")) { // rewritten single quote transpose
 	        			appendCode(" // Transpose");
 	        		} else if (contents.equalsIgnoreCase(":")) {  // range generator
+	        			// first:last or first:increment:last
+	        			// first has already been output
+	        			// first:last -> first ;; last // regular production order will work
+	        			// first:increment:last -> first ;; last ;; increment
 	        			appendCode(";;");
+	        			System.err.println("Handle range semantics: " + i + ":" + expr.getChildCount() + " " +expr.toStringTree(parser));
+	        			// i:':', i+1:expr, i+2:':', i+3:expr
+	        			if ((i+1) < expr.getChildCount()) {
+	        				if (isChildRule(expr, i+1, "expr") ) {
+//	        					isChildTerminal(expr, i+2, ":") &&
+//	        					isChildRule(expr, i+3, "expr") ) { // Matlab range with increment; must reorder for Mathematica
+	        					ParserRuleContext expr2 = (ParserRuleContext) expr.getChild(i+1);
+		        				System.err.println( expr2.getChildCount() + " " +expr2.toStringTree(parser));
+		        				if (expr2.getChildCount() == 3 &&
+		        					isChildRule(expr2, 0, "expr") &&
+		        					isChildTerminal(expr2, 1, ":") &&
+		        					isChildRule(expr2, 2, "expr") ) { // Matlab range with increment; must reorder for Mathematica
+		        					
+		        				    int position = wout.length();
+		        				    translateExpr( (ParserRuleContext) expr2.getChild(0) );
+		        				    String incrementString = wout.substring(position);
+		        					wout.setLength(position);
+		        				    translateExpr( (ParserRuleContext) expr2.getChild(2) );
+		        				    String finalString = wout.substring(position);
+		        					wout.setLength(position);
+		        					i++;
+		        					appendCode(finalString);
+		        					appendCode(";;");
+		        					appendCode(incrementString);
+		        				}
+	        				}
+	        			}
 	        		} else {
 	        			if (functionRemap.containsKey(contents)) {
 	        				contents = functionRemap.get(contents);
@@ -328,7 +334,9 @@ public class MatlabListener extends MATLABParserBaseListener {
 					ParserRuleContext childCtx0 = (ParserRuleContext) ctx.getChild(0);
 					if (isChildRule( ctx, 0, "idRef")) {
 						appendCode(prefix);
-						appendCode( childCtx0.getText() );
+						String symbol = childCtx0.getText();
+						symbol = rewriteSymbol(symbol);
+						appendCode( symbol );
 						appendCode( "[];\n");
 						addParseComment(ctx);
 					} else if (isChildRule( ctx, 0, "arrayRef")) {
@@ -373,10 +381,10 @@ public class MatlabListener extends MATLABParserBaseListener {
 
 		@Override
 		public void enterForStat(ForStatContext ctx) {
-			System.out.println( "enterForStat " + ctx.depth() + ", " + ctx.getChildCount() + " -> " + ctx.toStringTree(ruleNames) );
+			//System.out.println( "enterForStat " + ctx.depth() + ", " + ctx.getChildCount() + " -> " + ctx.toStringTree(ruleNames) );
 			// for / (idRef) / = / expr / endStat / statBlock / end
 			//     expr := expr / : / expr { : / expr }   
-			if (ctx.getChildCount() == 7) {
+			if (ctx.getChildCount() >= 7) {
 				if (isChildTerminal(ctx, 0, "for") && 
 					isChildRule(ctx, 1, "idRef") && 
 					isChildTerminal(ctx, 2, "=") && 

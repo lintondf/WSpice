@@ -141,7 +141,7 @@ expr
     | (PLUS|MINUS|NOT) expr
     | expr (MTIMES|TIMES|MLDIVIDE|LDIVIDE|MRDIVIDE|RDIVIDE) expr
     | expr (PLUS|MINUS) expr
-    | expr COLON expr
+    | expr COLON expr (COLON expr)?
     | expr (NOT|EQUALTO|NOTEQUALTO|GT|LT|GE|LE) expr
     | expr VECAND expr
     | expr VECOR expr

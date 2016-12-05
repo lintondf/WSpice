@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.Vector;
 
 import org.apache.commons.io.FileUtils;
@@ -61,10 +63,12 @@ public class TranslateMiceTest {
 			preamble = new Vector<String>();
 			cases = new Vector<Case>();
 			blockLevel = 0;
-			variables = new HashSet<String>();
+			variables = new TreeSet<String>();
+			functions = new TreeSet<String>();
 		}
 		
-		HashSet<String>  variables;
+		Set<String>  variables;
+		Set<String>  functions;
 		
 		String name;
 		int  blockLevel;
