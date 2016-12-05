@@ -88,6 +88,10 @@ whileStat
     : WHILE expr endStat statBlock* END
     ;
 
+forStat
+    : FOR idRef EQUALS expr endStat statBlock* END
+    ;
+    
 caseStat
     : SWITCH expr endStat 
       (CASE expr endStat statBlock*)*
@@ -107,6 +111,7 @@ stat
     : scalarAssignStat
     | arrayAssignStat
     | ifStat
+    | forStat
     | whileStat
     | caseStat
     | expr 

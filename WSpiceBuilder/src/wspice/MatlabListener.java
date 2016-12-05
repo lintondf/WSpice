@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
 import wspice.MATLABParser.ArrayAssignStatContext;
 import wspice.MATLABParser.ExprContext;
+import wspice.MATLABParser.ForStatContext;
 
 public class MatlabListener extends MATLABParserBaseListener {
 	    private final List<String> ruleNames;
@@ -23,6 +24,10 @@ public class MatlabListener extends MATLABParserBaseListener {
 	    
 	    protected StringBuffer wout;
 	    
+	    protected void appendCode( String code ) {
+	    	wout.append( code );
+	    }
+	     
 //	    protected class ExprListener extends MATLABParserBaseListener {
 //	    	public ExprListener() {}
 //	    	
@@ -86,10 +91,10 @@ public class MatlabListener extends MATLABParserBaseListener {
 	        return ruleName;
 		}
 		
-		protected void report( ParserRuleContext ctx ) {
-	        System.out.println( getName(ctx) + "  (" + ctx.getChildCount() + "," + ctx.depth() + ") " + ctx.toStringTree(ruleNames) );
+		protected void report( String tag, ParserRuleContext ctx ) {
+	        System.err.println( tag + ": " + getName(ctx) + "  (" + ctx.getChildCount() + "," + ctx.depth() + ") " + ctx.toStringTree(ruleNames) );
 	        for (int i = 0; i < ctx.getChildCount(); i++) {
-	        	System.out.printf("%d: %s\n", i, ctx.getChild(i).toStringTree(parser) );
+	        	System.err.printf("  %d: %s\n", i, ctx.getChild(i).toStringTree(parser) );
 	        }
 		}
 		
@@ -105,50 +110,39 @@ public class MatlabListener extends MATLABParserBaseListener {
 			}
 			System.out.println();
 		}
-		protected void translateExprArrayList( ParserRuleContext expr, boolean forceBraces ) {
-//			showChildren( "ExprArrayList: ", expr );
-			boolean isArrayExpr = forceBraces || !(getName(expr.getParent()).equals("arrayRef"));
-			//System.out.println( "EAL: " +isArrayExpr + " "+ expr.depth() + " " + getName(expr.getParent()) + " " + expr.toStringTree(ruleNames));
-			if (isArrayExpr) 
-				wout.append("{");
-			for (int i = 0; i < expr.getChildCount(); i++) {
-				ParseTree child = expr.getChild(i);
-//				System.out.printf("%d:%s:%s\n", i, child.getClass(), child.getText() );
-				if ( (i%2) == 0) { // even numbered must be expr
-					if (child instanceof ParserRuleContext) {
-						ParserRuleContext childCtx = (ParserRuleContext)child;
-						translateExpr( childCtx );
-					}
-				} else { // odd numbered must be terminal ',' ';' NL
-					if (child instanceof TerminalNodeImpl) {
-						if (child.getText().equals(",")) {
-							wout.append(", ");
-						} else {
-							wout.append(", "); // ("}, {");
-						}
-					}
-				}
-			}
-			if (isArrayExpr) 
-				wout.append("}");
-		}
+
 		
-		protected void translateArrayExpr( ParserRuleContext expr ) {
-			//System.out.println( "EA: " + expr.depth() + " " + getName(expr.getParent()) + " " + expr.toStringTree(ruleNames));
-			if (expr.getChildCount() == 3 &&
-				isChildTerminal(expr, 0, "[") &&
-				isChildRule( expr, 1, "exprArrayList") &&
-				isChildTerminal(expr, 2, "]") ) {
-				
-				if (expr.depth() == 6) {
-					wout.append("ArrayFlatten[");
-					translateExprArrayList( (ParserRuleContext) expr.getChild(1), true );
-					wout.append(", 1]");
-				} else {
-					translateExprArrayList( (ParserRuleContext) expr.getChild(1), false );					
+		public static String rewriteSymbol(String symbol) {
+			if (Character.isAlphabetic( symbol.charAt(0) )) {
+				symbol = symbol.replaceAll("cspice_", " WSpice`" );
+//				symbol = symbol.replaceAll("_", "");
+//				symbol = "wst" + symbol;
+				boolean upcaseNext = true;
+				StringBuffer out = new StringBuffer();
+				out.append("wst");
+				for (int i = 0; i < symbol.length(); i++) {
+					char ch = symbol.charAt(i);
+					if (Character.isLetter(ch) || Character.isDigit(ch)) {
+						if (upcaseNext)
+							ch = Character.toUpperCase(ch);
+						upcaseNext = false;
+						out.append(ch);
+					} else {
+						upcaseNext = true;
+					}
 				}
+				symbol = out.toString();
 			}
+			return symbol;
 		}
+
+
+		protected void addParseComment(ParserRuleContext ctx ) {
+//			appendCode( String.format("%s  (* %s *)", prefix, ctx.toStringTree(ruleNames) ));
+//			appendCode('\n');
+//			appendCode('\n');
+		}
+
 		
 		protected boolean isChildRule( ParserRuleContext expr, int iChild, String rule ) {
 			ParseTree child = expr.getChild(iChild);
@@ -167,6 +161,57 @@ public class MatlabListener extends MATLABParserBaseListener {
 			}
 			return false;			
 		}
+
+		protected void translateExprArrayList( ParserRuleContext expr, boolean forceBraces ) {
+//			showChildren( "ExprArrayList: ", expr );
+			boolean isArrayExpr = forceBraces || !(getName(expr.getParent()).equals("arrayRef"));
+			//System.out.println( "EAL: " +isArrayExpr + " "+ expr.depth() + " " + getName(expr.getParent()) + " " + expr.toStringTree(ruleNames));
+			if (isArrayExpr) 
+				appendCode("{");
+			for (int i = 0; i < expr.getChildCount(); i++) {
+				ParseTree child = expr.getChild(i);
+//				System.out.printf("%d:%s:%s\n", i, child.getClass(), child.getText() );
+				if ( (i%2) == 0) { // even numbered must be expr
+					if (child instanceof ParserRuleContext) {
+						ParserRuleContext childCtx = (ParserRuleContext)child;
+						translateExpr( childCtx );
+					}
+				} else { // odd numbered must be terminal ',' ';' NL
+					if (child instanceof TerminalNodeImpl) {
+						if (child.getText().equals(",")) {
+							appendCode(", ");
+						} else {
+							appendCode(", "); // ("}, {");
+						}
+					}
+				}
+			}
+			if (isArrayExpr) 
+				appendCode("}");
+		}
+		
+		protected void translateArrayExpr( ParserRuleContext expr ) {
+			//System.out.println( "EA: " + expr.depth() + " " + getName(expr.getParent()) + " " + expr.toStringTree(ruleNames));
+			if (expr.getChildCount() == 3 &&
+				isChildTerminal(expr, 0, "[") &&
+				isChildRule( expr, 1, "exprArrayList") &&
+				isChildTerminal(expr, 2, "]") ) {
+				
+				if (expr.depth() == 6) {
+					appendCode("ArrayFlatten[");
+					translateExprArrayList( (ParserRuleContext) expr.getChild(1), true );
+					appendCode(", 1]");
+				} else {
+					translateExprArrayList( (ParserRuleContext) expr.getChild(1), false );					
+				}
+			} else if (expr.getChildCount() == 2 &&
+					isChildTerminal(expr, 0, "[") &&
+					isChildTerminal(expr, 1, "]") ) {
+				appendCode("[]");
+			} else {
+				report( "translateArrayExpr", expr );
+			}
+		}
 		
 		protected void translateArrayRef( ParserRuleContext expr ) {
 			if (expr.getChildCount() == 4 &&
@@ -179,19 +224,21 @@ public class MatlabListener extends MATLABParserBaseListener {
 				symbol = rewriteSymbol(symbol);
 				//System.out.println( symbol + " ? " + variables.contains(symbol) );
 				if (variables.contains(symbol)) { // array reference
-					wout.append( symbol );
-					wout.append("[[");
+					appendCode( symbol );
+					appendCode("[[");
 					translateExprArrayList( (ParserRuleContext)expr.getChild(2), false );
-					wout.append("]]");
+					appendCode("]]");
 				} else {  // function invocation
 					if (functionRemap.containsKey(symbol)) {
 						symbol = functionRemap.get(symbol);
 					}
-					wout.append( symbol );
-					wout.append("[");
+					appendCode( symbol );
+					appendCode("[");
 					translateExprArrayList( (ParserRuleContext)expr.getChild(2), false );
-					wout.append("]");
+					appendCode("]");
 				}
+			} else {
+				report( "translateArrayRef", expr );
 			}
 		}
 		
@@ -204,18 +251,18 @@ public class MatlabListener extends MATLABParserBaseListener {
 	        		String contents = child.getText();
 	        		if (contents.charAt(0) == '\'') {
 	        			contents = String.format("\"%s\"", contents.substring(1, contents.length()-1) );
-	        			wout.append(contents);
+	        			appendCode(contents);
 	        		} else if (contents.equals("@")) { // rewritten single quote transpose
-	        			wout.append(" // Transpose");
+	        			appendCode(" // Transpose");
 	        		} else if (contents.equalsIgnoreCase(":")) {  // range generator
-	        			wout.append(";;");
+	        			appendCode(";;");
 	        		} else {
 	        			if (functionRemap.containsKey(contents)) {
 	        				contents = functionRemap.get(contents);
 	        			} else {
 	        				contents = rewriteSymbol( contents );
 	        			}
-	        			wout.append(contents);
+	        			appendCode(contents);
 	        		}
 	        	} else if (child instanceof ParserRuleContext) {
 	        		ParserRuleContext childCtx = (ParserRuleContext) child;
@@ -240,35 +287,20 @@ public class MatlabListener extends MATLABParserBaseListener {
 	        }			
 		}
 		
-		public static String rewriteSymbol(String symbol) {
-			if (Character.isAlphabetic( symbol.charAt(0) )) {
-				symbol = symbol.replaceAll("cspice_", " WSpice`" );
-				symbol = symbol.replaceAll("_", "");
-				symbol = "wst" + symbol;
-			}
-			return symbol;
-		}
-
-
-		protected void addParseComment(ParserRuleContext ctx ) {
-			wout.append( String.format("%s  (* %s *)", prefix, ctx.toStringTree(ruleNames) ));
-			wout.append('\n');
-			wout.append('\n');
-		}
 
 		@Override
 		public void enterScalarAssignStat(MATLABParser.ScalarAssignStatContext ctx) {
 //			report( ctx );
-			wout.append(prefix);
+			appendCode(prefix);
 			if (ctx.getChildCount() == 3) {
 				ParserRuleContext childCtx0 = (ParserRuleContext) ctx.getChild(0);
 				String name0 = getName( childCtx0 );
 				if (name0.equals("idRef")) {
 					String symbol = childCtx0.getText();
 					symbol = rewriteSymbol(symbol);
-					wout.append( symbol );
+					appendCode( symbol );
 					variables.add( symbol );
-					wout.append(" = ");
+					appendCode(" = ");
 				}
 				if (ctx.getChild(1).getText().equals("=")) {
 					ParserRuleContext childCtx2 = (ParserRuleContext) ctx.getChild(2);
@@ -277,7 +309,9 @@ public class MatlabListener extends MATLABParserBaseListener {
 						translateExpr( childCtx2 );
 					}
 				}
-				wout.append(";\n");
+				appendCode(";\n");
+			} else {
+				report( "enterScalarAssignStat", ctx );
 			}
 			addParseComment(ctx);
 		}
@@ -288,20 +322,20 @@ public class MatlabListener extends MATLABParserBaseListener {
 //			System.out.println( "enterExpr " + ctx.depth() + ", " + ctx.getChildCount() +
 //					" : " + getName(ctx.parent) +
 //					" -> " + ctx.toStringTree(ruleNames) );					
-			// script/statBlock/stat/expr for standalone function invocations
+			// script/statBlock/stat/expr for standalone function invocations ONLY
 			if (ctx.depth() == 4 && getName(ctx.parent).equals("stat")) {
 				if (ctx.getChildCount() == 1) {
 					ParserRuleContext childCtx0 = (ParserRuleContext) ctx.getChild(0);
 					if (isChildRule( ctx, 0, "idRef")) {
-						wout.append(prefix);
-						wout.append( childCtx0.getText() );
-						wout.append( "[];\n");
+						appendCode(prefix);
+						appendCode( childCtx0.getText() );
+						appendCode( "[];\n");
 						addParseComment(ctx);
 					} else if (isChildRule( ctx, 0, "arrayRef")) {
 						//System.out.println( "expr[4]/arrayRef "+ childCtx0.depth() + ", " + childCtx0.getChildCount() + " -> " + childCtx0.toStringTree(ruleNames) );
-						wout.append(prefix);
+						appendCode(prefix);
 						translateArrayRef( childCtx0 );
-						wout.append( ";\n");
+						appendCode( ";\n");
 						addParseComment(ctx);
 					} else {
 						System.err.println( "enterExpr unknown rule " + ctx.depth() + ", " + ctx.getChildCount() + " -> " + ctx.toStringTree(ruleNames) );
@@ -309,6 +343,8 @@ public class MatlabListener extends MATLABParserBaseListener {
 				} else {
 					System.err.println( "enterExpr too many children " + ctx.depth() + ", " + ctx.getChildCount() + " -> " + ctx.toStringTree(ruleNames) );					
 				}
+//			} else {
+//				report( "enterExpr", ctx );
 			}
 		}
 
@@ -316,7 +352,7 @@ public class MatlabListener extends MATLABParserBaseListener {
 		@Override
 		public void enterArrayAssignStat(ArrayAssignStatContext ctx) {
 			//System.out.println( "enterArrayAssignStat " + ctx.depth() + ", " + ctx.getChildCount() + " -> " + ctx.toStringTree(ruleNames) );					
-			wout.append(prefix);
+			appendCode(prefix);
 			if (ctx.getChildCount() == 3 && 
 				isChildRule(ctx, 0, "arrayRef") &&
 				isChildTerminal(ctx, 1, "=") &&
@@ -324,12 +360,70 @@ public class MatlabListener extends MATLABParserBaseListener {
 				
 				ParserRuleContext childCtx0 = (ParserRuleContext) ctx.getChild(0);
 				translateArrayRef( childCtx0 );
-				wout.append(" = ");
+				appendCode(" = ");
 				ParserRuleContext childCtx2 = (ParserRuleContext) ctx.getChild(2);
 				translateExpr( childCtx2 );
-				wout.append(";\n");
+				appendCode(";\n");
+			} else {
+				report( "enterArrayAssignStat", ctx );
 			}
 			addParseComment(ctx);
+		}
+
+
+		@Override
+		public void enterForStat(ForStatContext ctx) {
+			System.out.println( "enterForStat " + ctx.depth() + ", " + ctx.getChildCount() + " -> " + ctx.toStringTree(ruleNames) );
+			// for / (idRef) / = / expr / endStat / statBlock / end
+			//     expr := expr / : / expr { : / expr }   
+			if (ctx.getChildCount() == 7) {
+				if (isChildTerminal(ctx, 0, "for") && 
+					isChildRule(ctx, 1, "idRef") && 
+					isChildTerminal(ctx, 2, "=") && 
+					isChildRule(ctx, 3, "expr") ) {
+					
+					String symbol = ctx.getChild(1).getText();
+					
+					String initialValue = null;
+					String finalValue = null;
+					String incrementValue = "1";
+					StringBuffer save = wout;
+					
+					ParserRuleContext expr = (ParserRuleContext) ctx.getChild(3);
+					if (isChildRule(expr, 0, "expr")) {
+						wout = new StringBuffer();
+						translateExpr( (ParserRuleContext) expr.getChild(0) );
+						initialValue = wout.toString();
+					}
+					if (isChildRule(expr, 2, "expr")) {
+						wout = new StringBuffer();
+						translateExpr( (ParserRuleContext) expr.getChild(2) );						
+						finalValue = wout.toString();
+					}
+					if (expr.getChildCount() > 3 && isChildRule( expr, 4, "expr")) {
+						wout = new StringBuffer();
+						translateExpr( (ParserRuleContext) expr.getChild(4) );	
+						incrementValue = finalValue;
+						finalValue = wout.toString();
+					}
+					wout = save;
+					appendCode(prefix);
+					appendCode( String.format("For[%s = %s,%s < %s, %s += %s,\n", 
+							symbol, initialValue, symbol, finalValue, symbol, incrementValue ) );
+					addParseComment(ctx);
+				}
+			} else {
+				report( "enterForStat", ctx );
+			}
+		}
+
+
+		@Override
+		public void exitForStat(ForStatContext ctx) {
+			appendCode("(*@*)");
+			appendCode(prefix);
+			appendCode("];");
+			appendCode("\n");
 		}
 
 	}

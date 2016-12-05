@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Stack;
 import java.util.Vector;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -1371,6 +1372,12 @@ public class Builder {
 		return "                     ".substring(0, indent);
 	}
 	
+	private static String translateMatlabBlock(HashSet<String> variables, String line, int indent) {
+		Vector<String> block = new Vector<String>();
+		block.add(line);
+		return translateMatlabBlock( variables, block, indent );
+	}
+	
 	public static String translateMatlabBlock( HashSet<String> variables, List<String> block, int indent) {
 		String prefix = indentString(indent);
 		StringBuffer sb = new StringBuffer();
@@ -1382,7 +1389,8 @@ public class Builder {
 			if (quotes == 1) {
 				s = s.replace('\'', '@');
 			} else if ((quotes %2) == 1) { // more than 1 odd number of single quotes
-				System.err.println("Fancy Transpose: " + s);
+				//System.err.println("Fancy Transpose: " + s);
+				s = handleFancyTransposes(s);
 			}
 			sb.append(s); sb.append("\n");
 			System.out.printf("%5d : %s\n", lineNumber++, s );
@@ -1398,6 +1406,31 @@ public class Builder {
 		ParseTreeWalker.DEFAULT.walk(listener, tree);
 		String wout = listener.getMathematica();
 		return wout;
+	}
+
+	private static String handleFancyTransposes(String s) {
+		// more than 1 odd number of single quotes
+		char out[] = s.toCharArray();
+		for (int i = 0; i < out.length; i++) {
+			if (out[i] == '\'') {
+				for (int k = i-1; k >= 0; k--) {
+					Character ch = out[k];
+					if (ch.isWhitespace(ch)) continue;
+					if (ch.isLetter(ch) || ch.isDigit(ch) || ch == ')' || ch == ']') {
+						out[i] = '@';
+					}
+					break;
+				}
+			}
+			if (out[i] == '\'') { // unchanged; find match
+				for (i++; i < out.length; i++) {
+					if (out[i] == '\'') {
+						break;
+					}
+				}
+			}
+		}
+		return new String(out);
 	}
 
 	public static void main(String[] args) {
@@ -1422,30 +1455,62 @@ public class Builder {
 						+ "ckcov_matlab.m");
 				
 				if (translator.translate()) {
+					Stack<String>  forEnds = new Stack<String>();
 					int indent = 4;
 					String preamble = translateMatlabBlock(translator.module.variables, translator.module.preamble, indent);
 					indent += 2;
 					StringBuffer caseTranslations = new StringBuffer();
 					for (Module.Case testCase : translator.module.cases) {
 						caseTranslations.append( String.format("%sModule[{}, (* %s *)\n", indentString(indent), testCase.title) );
-						String setup = translateMatlabBlock(translator.module.variables, testCase.forStatement, indent);
-						caseTranslations.append(setup);
+						String forBlock = translateMatlabBlock(translator.module.variables, testCase.forStatement, indent);
+						if (!forBlock.trim().isEmpty()) {
+							String[] forPieces = forBlock.split("\\(\\*\\@\\*\\)");
+							System.out.println("<"+forBlock.trim()+">");
+							System.out.println(forPieces.length);
+							System.out.printf("<%s> <%s>\n", forPieces[0], forPieces[1] );
+							caseTranslations.append(forPieces[0]);
+							forEnds.push(forPieces[1]);
+						}
 						indent += 2;
 						for (Module.Subcase subCase : testCase.subcases) {
-							caseTranslations.append( String.format("%s(* subcase *)\n", indentString(indent) ));														
+							caseTranslations.append( String.format("%s(* subcase *)\n", indentString(indent) ));
+							if (subCase.catcher != null) { // in try/catch
+								caseTranslations.append( String.format("%sCheckAbort[\n", indentString(indent)) );
+								indent += 2;
+								String steps = translateMatlabBlock(translator.module.variables, subCase.steps, indent);
+								caseTranslations.append(steps);
+								indent -= 2;
+								caseTranslations.append( String.format("%s,\n", indentString(indent)) );
+								indent += 2;
+								String check = translateMatlabBlock(translator.module.variables, subCase.catcher, indent);
+								caseTranslations.append(check);
+								indent -= 2;
+								caseTranslations.append( String.format("%s]; (*CatchAbort*)\n", indentString(indent)) );
+							} else {
+								String steps = translateMatlabBlock(translator.module.variables, subCase.steps, indent);
+								caseTranslations.append(steps);
+							}
+							String checks = translateMatlabBlock(translator.module.variables, subCase.checks, indent);
+							caseTranslations.append(checks);
+							String setup = translateMatlabBlock(translator.module.variables, subCase.setup, indent);
+							caseTranslations.append(setup);
 						}
 						indent -= 2;
 						if (testCase.forEnds) {
-							caseTranslations.append( String.format("%s] (* For *)\n", indentString(indent) ));							
+							caseTranslations.append( String.format("%s(* For *) %s", indentString(indent), 
+									forEnds.pop() ));							
 						}
+						String cleanup = translateMatlabBlock(translator.module.variables, testCase.cleanup, indent);
+						caseTranslations.append(cleanup);
 						caseTranslations.append( String.format("%s] (* Module %s *)\n\n", indentString(indent), testCase.title ));							
 					}
 					indent -= 2;
 					PrintStream tests = new PrintStream(new FileOutputStream(new File("wspiceTests.wl")));
 					tests.println("wsuZeros[m_, n_] := ConstantArray[0, {m, n}];");
 					tests.printf("%s = Module[{},\n", MatlabListener.rewriteSymbol(translator.module.name) );
-					tests.print(preamble);
-					tests.print(caseTranslations.toString());
+					// remove any unused FOR block markers
+					tests.print(preamble.replaceAll("\\(\\*\\@\\*\\)", "" ));
+					tests.print(caseTranslations.toString().replaceAll("\\(\\*\\@\\*\\)", "" ));
 					tests.println("];");
 					tests.close();
 					return;
@@ -1521,4 +1586,5 @@ public class Builder {
 			e.printStackTrace();
 		}
 	}
+
 }

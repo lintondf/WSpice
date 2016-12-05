@@ -19,6 +19,8 @@ ELSEIF : 'elseif' ;
 
 ELSE : 'else' ;
 
+FOR  : 'for' ;
+
 WHILE : 'while' ;
 
 SWITCH : 'switch' ;

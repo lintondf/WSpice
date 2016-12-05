@@ -180,6 +180,16 @@ public interface MATLABParserListener extends ParseTreeListener {
 	 */
 	void exitWhileStat(MATLABParser.WhileStatContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link MATLABParser#forStat}.
+	 * @param ctx the parse tree
+	 */
+	void enterForStat(MATLABParser.ForStatContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MATLABParser#forStat}.
+	 * @param ctx the parse tree
+	 */
+	void exitForStat(MATLABParser.ForStatContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link MATLABParser#caseStat}.
 	 * @param ctx the parse tree
 	 */

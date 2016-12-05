@@ -275,6 +275,7 @@ public class TranslateMiceTest {
 				forStatement.add("F2:"+line);
 				line = nextLine();				
 			}
+			forStatement.add("F3:end");  // fake end for syntax
 			Module.Case testCase = module.new Case( line );
 			testCase.forStatement = forStatement;
 			module.cases.add( testCase );
@@ -360,7 +361,7 @@ public class TranslateMiceTest {
 						}
 						continue;
 					}
-					subcase.checks.add("S5:"+module.blockLevel+":"+line);
+					subcase.checks.add("S5:"+line);
 					if (rit.hasNext()) {
 						line = nextLine();
 					} else {
