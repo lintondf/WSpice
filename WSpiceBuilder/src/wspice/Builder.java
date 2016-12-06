@@ -1437,6 +1437,7 @@ public class Builder {
 		MatlabListener.functionRemap.put("check", "WSpiceTest`check");
 		MatlabListener.functionRemap.put("delete", "DeleteFile");
 		MatlabListener.functionRemap.put("false", "False");
+		MatlabListener.functionRemap.put("lasterr", "Head[$MessageList]" );
 		MatlabListener.functionRemap.put("max", "Max");
 		MatlabListener.functionRemap.put("MATLAB$check$error", "WSpiceTest`checkError");
 		MatlabListener.functionRemap.put("min", "Min");			
