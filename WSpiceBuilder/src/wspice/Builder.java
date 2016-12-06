@@ -1434,10 +1434,11 @@ public class Builder {
 	}
 
 	public static void main(String[] args) {
-		
+		MatlabListener.functionRemap.put("check", "WSpiceTest`check");
 		MatlabListener.functionRemap.put("delete", "DeleteFile");
 		MatlabListener.functionRemap.put("false", "False");
 		MatlabListener.functionRemap.put("max", "Max");
+		MatlabListener.functionRemap.put("MATLAB$check$error", "WSpiceTest`checkError");
 		MatlabListener.functionRemap.put("min", "Min");			
 		MatlabListener.functionRemap.put("numel", "Length");
 		MatlabListener.functionRemap.put("regexp", "wsuRegExp"); //	wsuRegExp[H_, N_] := StringCases[H,RegularExpression[N]]		

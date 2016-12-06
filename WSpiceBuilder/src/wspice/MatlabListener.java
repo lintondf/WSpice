@@ -87,6 +87,9 @@ public class MatlabListener extends MATLABParserBaseListener {
 			if (symbol.startsWith("cspice_")) {
 				symbol = symbol.replaceAll("cspice_", "WSpice`" );
 				return symbol;
+			} else if (symbol.startsWith("tutils_")) {
+				symbol = symbol.replaceAll("tutils_", "WSpiceTest`" );
+				return symbol;				
 			} else if (Character.isAlphabetic( symbol.charAt(0) )) {
 //				symbol = symbol.replaceAll("_", "");
 //				symbol = "wst" + symbol;
