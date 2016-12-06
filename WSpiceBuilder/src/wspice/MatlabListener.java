@@ -235,14 +235,14 @@ public class MatlabListener extends MATLABParserBaseListener {
 	        			// first:last -> first ;; last // regular production order will work
 	        			// first:increment:last -> first ;; last ;; increment
 	        			appendCode(";;");
-	        			System.err.println("Handle range semantics: " + i + ":" + expr.getChildCount() + " " +expr.toStringTree(parser));
+	        			//System.err.println("Handle range semantics: " + i + ":" + expr.getChildCount() + " " +expr.toStringTree(parser));
 	        			// i:':', i+1:expr, i+2:':', i+3:expr
 	        			if ((i+1) < expr.getChildCount()) {
 	        				if (isChildRule(expr, i+1, "expr") ) {
 //	        					isChildTerminal(expr, i+2, ":") &&
 //	        					isChildRule(expr, i+3, "expr") ) { // Matlab range with increment; must reorder for Mathematica
 	        					ParserRuleContext expr2 = (ParserRuleContext) expr.getChild(i+1);
-		        				System.err.println( expr2.getChildCount() + " " +expr2.toStringTree(parser));
+		        				//System.err.println( expr2.getChildCount() + " " +expr2.toStringTree(parser));
 		        				if (expr2.getChildCount() == 3 &&
 		        					isChildRule(expr2, 0, "expr") &&
 		        					isChildTerminal(expr2, 1, ":") &&
