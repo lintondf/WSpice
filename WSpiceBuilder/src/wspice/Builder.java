@@ -1439,7 +1439,11 @@ public class Builder {
 		MatlabListener.functionRemap.put("false", "False");
 		MatlabListener.functionRemap.put("max", "Max");
 		MatlabListener.functionRemap.put("min", "Min");			
+		MatlabListener.functionRemap.put("numel", "Length");
+		MatlabListener.functionRemap.put("regexp", "wsuRegExp"); //	wsuRegExp[H_, N_] := StringCases[H,RegularExpression[N]]		
+		MatlabListener.functionRemap.put("size", "wsuSize"); // wsuSize[A_, d_] := Dimensions[A][[d]]; wsuSize[A] := Dimensions[A]			
 		MatlabListener.functionRemap.put("true", "True");
+		MatlabListener.functionRemap.put("sprintf", "MathPrintF`sprintf"); // GPL https://github.com/vlsd/MathPrintF
 		MatlabListener.functionRemap.put("unique", "DeleteDuplicates");
 		MatlabListener.functionRemap.put("zeros", "wsuZeros"); // wsuZeros[m_, n_] := ConstantArray[0, {m, n}];
 
