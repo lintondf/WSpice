@@ -1,4 +1,8 @@
 package wspice;
+/**
+ * Generated Tests use GPL MathPrintF https://github.com/vlsd/MathPrintF
+ * Installed init.m to ~/Library/Mathematica/Autoload/MathPrintF
+ */
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -1434,15 +1438,15 @@ public class Builder {
 	}
 
 	public static void main(String[] args) {
-		MatlabListener.functionRemap.put("check", "WSpiceTest`check");
+		MatlabListener.functionRemap.put("check", "wsuCheck");
 		MatlabListener.functionRemap.put("delete", "DeleteFile");
 		MatlabListener.functionRemap.put("false", "False");
 		MatlabListener.functionRemap.put("lasterr", "Head[$MessageList]" );
 		MatlabListener.functionRemap.put("lasterror", "Head[$MessageList]" );
 		MatlabListener.functionRemap.put("max", "Max");
-		MatlabListener.functionRemap.put("MATLAB$check$error", "WSpiceTest`checkError");
+		MatlabListener.functionRemap.put("MATLAB$check$error", "wsuCheckError");
 		MatlabListener.functionRemap.put("min", "Min");			
-		MatlabListener.functionRemap.put("numel", "Length");
+		MatlabListener.functionRemap.put("numel", "wsuNumEl"); // wsuNumEl[A_] := Length[Flatten[A]]
 		MatlabListener.functionRemap.put("regexp", "wsuRegExp"); //	wsuRegExp[H_, N_] := StringCases[H,RegularExpression[N]]		
 		MatlabListener.functionRemap.put("size", "wsuSize"); // wsuSize[A_, d_] := Dimensions[A][[d]]; wsuSize[A] := Dimensions[A]			
 		MatlabListener.functionRemap.put("true", "True");
@@ -1515,6 +1519,11 @@ public class Builder {
 					indent -= 2;
 					PrintStream tests = new PrintStream(new FileOutputStream(new File("wspiceTests.wl")));
 					tests.println("wsuZeros[m_, n_] := ConstantArray[0, {m, n}];");
+					tests.println("wsuRegExp[H_, N_] := StringCases[H,RegularExpression[N]]");
+					tests.println("wsuSize[A_, d_] := Dimensions[A][[d]]; wsuSize[A_] := Dimensions[A]");
+					tests.println("wsuNumEl[A_] := Length[Flatten[A]]");
+					tests.println("wsuCheck[m_] := wsuCheckError[m, \"Unexcepted exception\", False];" );
+					tests.println("wsuCheckError[m_, t_, ok_] := If[! ok, Throw[MathPrintF`sprintf[\"TEST FAILED: %s %s\", m, t]]]");
 					StringBuffer localVariableList = new StringBuffer();
 					boolean first = true;
 					for (String symbol : translator.module.variables) {
