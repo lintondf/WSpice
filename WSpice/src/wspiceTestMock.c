@@ -1,3 +1,5 @@
+#include "wspicePrint.h"
+
 /* tstlgr.f -- translated by f2c (version 19980913).
    You must link the resulting object file with the libraries:
 	-lf2c -lm   (in that order)
@@ -16,6 +18,7 @@ static integer c__14 = 14;
 	ftnlen messge_len, ftnlen gstyle_len, ftnlen fstyle_len, ftnlen 
 	marker_len)
 {
+	wsMessage( messge );
     return 0;
 } /* tstlgr_ */
 

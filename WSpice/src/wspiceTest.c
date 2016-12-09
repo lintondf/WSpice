@@ -8,6 +8,9 @@
 #include "SpiceZmc.h"
 #include "tutils_c.h"
 
+#include "wspicePrint.h"
+
+extern void wsSetLibraryData( WolframLibraryData _libData );
 
 
 #ifndef DLLEXPORT
@@ -18,6 +21,7 @@
 
 DLLEXPORT int wst_chckad(WolframLibraryData libData, mint Argc, MArgument *Args,
 		MArgument Res) {
+	wsSetLibraryData( libData );
 	SpiceChar * name = MArgument_getUTF8String(Args[0]);;
 	MTensor arrayTensor = MArgument_getMTensor(Args[1]);
 	SpiceDouble * array = libData->MTensor_getRealData(arrayTensor);
@@ -38,6 +42,7 @@ DLLEXPORT int wst_chckad(WolframLibraryData libData, mint Argc, MArgument *Args,
 
 DLLEXPORT int wst_zztstckcov(WolframLibraryData libData, mint Argc,
 		MArgument *Args, MArgument Res) {
+	wsSetLibraryData( libData );
 	char *p = MArgument_getUTF8String(Args[0]);
 	zztstckcov(p);
 	libData->UTF8String_disown(p);
@@ -52,11 +57,14 @@ extern void f_init();
 extern void f_exit();
 
 DLLEXPORT int WolframLibrary_initialize(WolframLibraryData libData) {
+	wsSetLibraryData( libData );
+	flushDebug();
 	f_init();
 	return 0;
 }
 
 DLLEXPORT void WolframLibrary_uninitialize(WolframLibraryData libData) {
+	wsSetLibraryData( libData );
 	f_exit();
 	return;
 }

@@ -5,23 +5,12 @@
 #include <stdio.h>
 #include "SpiceUsr.h"
 #include "mice.h"
+#include "wspicePrint.h"
 
-static WolframLibraryData libData = NULL;
-extern FILE* debug;
-extern void flushDebug( WolframLibraryData libData );
-
-void wsSetLibraryData( WolframLibraryData _libData ) {
-	libData = _libData;
-}
-
-void wsMessage(const char* str ) {
-	fprintf(debug, "%s", str );
-	flushDebug(libData);
-}
 
 void mice_fail( long cnt ) {
 	fprintf(debug, "mice_fail: %ld", cnt );
-	flushDebug(libData);
+	flushDebug();
 }
 
 void reportErrorToMathematica(WolframLibraryData libData, const char* out, const char* msg);
@@ -30,8 +19,8 @@ void mexAtExit( void* f) {
 }
 
 void mexErrMsgTxt( const char* msg ) {
-	reportErrorToMathematica( libData, "wspice", msg );
-	libData->Message("wspice");
+	reportErrorToMathematica( wsGetLibraryData(), "wspice", msg );
+	wsGetLibraryData()->Message("wspice");
 }
 
 void* mxMalloc( int  bytes ) {
