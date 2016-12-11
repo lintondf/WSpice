@@ -18,7 +18,34 @@ static integer c__14 = 14;
 	ftnlen messge_len, ftnlen gstyle_len, ftnlen fstyle_len, ftnlen 
 	marker_len)
 {
-	wsMessage( messge );
+	int i;
+	char buf[4096];
+	switch (n__) {
+	case 1:
+		//sprintf(buf, "%d, %d, %d, %d, %d", n__, messge_len, gstyle_len, fstyle_len, marker_len);
+		//wsMessage(buf);
+		if (messge_len <= 1)
+			break;
+		strncpy(buf, messge, messge_len );
+		char* pCh = (buf + messge_len - 1);
+		while (pCh != buf && pCh[0] == ' ') {
+			pCh[0] = '\0';
+			pCh--;
+		}
+		if (strlen(buf) != 0)
+			i = 0;
+
+			while(buf[i]){
+			    if (!(pCh = strstr(buf+i,"/cr")))
+			    	break;
+			    *pCh = '\n';
+			    strcpy( pCh+1, pCh+3);
+			    i++;
+			}
+
+			wsMessage( buf );
+		break;
+	}
     return 0;
 } /* tstlgr_ */
 
